@@ -12,13 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package drivers
+package vsphere
+
+import (
+	"github.com/docker/go-plugins-helpers/volume"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/plugin_utils"
+)
 
 // VolumeDriver interface used by the refcountedVolume module to handle
 // recovery mounts/unmounts.
-type VolumeDriver interface {
+type VolumeImpl interface {
+	Create(volume.Request) volume.Response
+	Mount(volume.MountRequest, *plugin_utils.VolumeInfo) volume.Response
+	Unmount(volume.UnmountRequest) volume.Response
+	Get(volume.Request) volume.Response
+	Remove(volume.Request) volume.Response
+	Path(volume.Request) volume.Response
+	List(volume.Request) ([]*volume.Volume, error)
+	GetMountPoint(string) string
+	IsMounted(string) bool
 	MountVolume(string, string, string, bool, bool) (string, error)
 	UnmountVolume(string) error
 	GetVolume(string) (map[string]interface{}, error)
-	GetRefCount(string) uint
 }
