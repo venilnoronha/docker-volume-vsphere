@@ -1119,7 +1119,10 @@ def setStatusDetached(vmdk_path):
 
 
 def getStatusAttached(vmdk_path):
-    '''Returns (attached, uuid, attach_as, vm_name) tuple. For 'detached' status uuid is None'''
+    '''
+    Returns (attached, uuid, attach_as, vm_name) tuple. For 'detached' status
+    uuid and vm_name are None.
+    '''
 
     vol_meta = kv.getAll(vmdk_path)
     try:
