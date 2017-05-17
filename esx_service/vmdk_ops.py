@@ -606,8 +606,7 @@ def removeVMDK(vmdk_path, vol_name=None, vm_name=None, tenant_uuid=None, datasto
                 vol_name = vmdk_utils.get_volname_from_vmdk_path(vmdk_path)
             logging.info("*** removeVMDK: %s is in use, volume = %s VM = %s VM-uuid = %s (%s)",
                 vmdk_path, vol_name, attached_vm_name, kv_uuid, ret)
-            return err("Failed to remove volume {0}, in use by VM = {1} VM-uuid = {2}.".format(
-                vol_name, attached_vm_name, kv_uuid))
+            return err("Failed to remove volume {0}, in use by VM = {1}.".format(vol_name, attached_vm_name))
 
     # Cleaning .vmdk file
     clean_err = cleanVMDK(vmdk_path, vol_name)
