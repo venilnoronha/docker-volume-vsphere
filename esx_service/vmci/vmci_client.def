@@ -1,0 +1,3 @@
+EXPORTS
+    Vmci_GetReply
+    Vmci_FreeBuf
