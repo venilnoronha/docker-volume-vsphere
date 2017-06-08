@@ -21,6 +21,8 @@
 // API: Exposes Vmci_GetReply and Vmci_FreeBuf.
 //
 
+#include <stdlib.h>
+#include <errno.h>
 #include <stdint.h>
 
 #include "vmci_sockets.h"
