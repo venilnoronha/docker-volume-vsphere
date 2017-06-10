@@ -34,7 +34,7 @@
 #define START_CLIENT_PORT 100 // Where to start client port
 #define BIND_RETRY_COUNT (MAX_CLIENT_PORT - START_CLIENT_PORT) // Retry entire range on bind failures
 
-// operations status. 0 is OK
+// Operations status. 0 is OK
 typedef int be_sock_status;
 
 //
@@ -48,7 +48,6 @@ typedef struct {
 //
 // Protocol message structure: request and reply
 //
-
 typedef struct be_request {
    uint32_t mlen;   // length of message (including trailing \0)
    const char *msg; // null-terminated immutable JSON string.

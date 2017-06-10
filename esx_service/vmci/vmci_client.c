@@ -20,7 +20,7 @@
 //
 // API: Exposes Vmci_GetReply and Vmci_FreeBuf. The calls are blocking.
 //
-// For details on _WIN32 specific handling, please refer the following link:
+// For details on _WIN32 specific handling, please refer to the following link:
 // https://pubs.vmware.com/vsphere-65/topic/com.vmware.vmci.pg.doc/vsockStreams.5.4.html
 //
 
