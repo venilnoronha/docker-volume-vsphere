@@ -129,11 +129,13 @@ func main() {
 		}
 	}
 
+	// On windows, if a driver other than vsphere is specified, switch
+	// to the vsphere driver and print a warning message.
 	if runtime.GOOS == "windows" && *driverName != vsphereDriver {
-		log.Warningf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
+		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
 			vsphereDriver, c.Driver)
-		fmt.Printf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
-			vsphereDriver, c.Driver)
+		log.Warning(msg)
+		fmt.Println(msg)
 		*driverName = vsphereDriver
 	}
 
