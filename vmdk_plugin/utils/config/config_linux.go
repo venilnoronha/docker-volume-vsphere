@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config_test
+package config
 
-// Test Loading JSON config files
+const (
+	// Default paths - used in log init in main() and test:
 
-import (
-	"github.com/stretchr/testify/assert"
-	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
-	"testing"
+	// DefaultConfigPath is the default location of Log configuration file
+	DefaultConfigPath = "/etc/docker-volume-vsphere.conf"
+	// DefaultLogPath is the default location of log (trace) file
+	DefaultLogPath = "/var/log/docker-volume-vsphere.log"
 )
-
-func TestLoad(t *testing.T) {
-	conf, err := config.Load("../../default-config.json")
-	assert.Nil(t, err)
-	assert.Equal(t, conf.MaxLogSizeMb, 100)
-	assert.Equal(t, conf.MaxLogAgeDays, 28)
-	assert.Equal(t, conf.LogPath, "/var/log/docker-volume-vsphere.log")
-}
