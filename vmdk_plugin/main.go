@@ -39,8 +39,8 @@ const (
 	defaultPort   = 1019
 )
 
-// Server responds to HTTP requests from Docker.
-type Server interface {
+// PluginServer responds to HTTP requests from Docker.
+type PluginServer interface {
 	// Init initializes the server.
 	Init()
 	// Destroy destroys the server.
@@ -183,7 +183,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	server := NewServer(*driverName, &driver)
+	server := NewPluginServer(*driverName, &driver)
 
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGINT, syscall.SIGTERM)

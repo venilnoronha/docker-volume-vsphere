@@ -30,9 +30,9 @@ const (
 	pluginSockDir = "/run/docker/plugins" // Unix sock for the plugin is maintained here
 )
 
-// SockServer serves HTTP requests from Docker over unix sock.
-type SockServer struct {
-	Server
+// SockPluginServer serves HTTP requests from Docker over unix sock.
+type SockPluginServer struct {
+	PluginServer
 	sockAddr string         // Server's unix sock address
 	driver   *volume.Driver // The driver implementation
 }
@@ -47,14 +47,14 @@ func fullSocketAddress(pluginName string) string {
 	return filepath.Join(pluginSockDir, pluginName+".sock")
 }
 
-// NewServer creates a new instance of SockServer.
-func NewServer(driverName string, driver *volume.Driver) *SockServer {
-	return &SockServer{sockAddr: fullSocketAddress(driverName), driver: driver}
+// NewPluginServer creates a new instance of SockPluginServer.
+func NewPluginServer(driverName string, driver *volume.Driver) *SockPluginServer {
+	return &SockPluginServer{sockAddr: fullSocketAddress(driverName), driver: driver}
 }
 
 // Init registers the volume driver with a handler to service HTTP
 // requests from Docker.
-func (s *SockServer) Init() {
+func (s *SockPluginServer) Init() {
 	handler := volume.NewHandler(*s.driver)
 
 	log.WithFields(log.Fields{
@@ -65,6 +65,6 @@ func (s *SockServer) Init() {
 }
 
 // Destroy removes the Docker plugin sock.
-func (s *SockServer) Destroy() {
+func (s *SockPluginServer) Destroy() {
 	os.Remove(s.sockAddr)
 }
