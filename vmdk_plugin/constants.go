@@ -17,7 +17,7 @@ package main
 const (
 	// vDVS drivers.
 	photonDriver  = "photon"
-	vmdkDriver    = "vmdk"
+	vmdkDriver    = "vmdk" // deprecated
 	vsphereDriver = "vsphere"
 
 	// Default ESX service port.

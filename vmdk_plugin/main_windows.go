@@ -14,7 +14,7 @@
 
 package main
 
-// A VMDK Docker Data Volume plugin implementation for windows.
+// A VMDK Docker Data Volume plugin implementation for Windows OS.
 
 import (
 	"encoding/json"
