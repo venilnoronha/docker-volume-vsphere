@@ -64,10 +64,21 @@ func writeJSON(resp interface{}, writer *http.ResponseWriter) error {
 	return err
 }
 
+// writeError writes an error message and status to the writer.
+func writeError(path string, writer http.ResponseWriter, req *http.Request, status int, err error) {
+	log.WithFields(log.Fields{"path": path, "req": req, "status": status,
+		"err": err}).Error("Failed to service request ")
+	http.Error(writer, err.Error(), status)
+}
+
 // PluginActivate writes the plugin's handshake response to the writer.
 func (s *NpipePluginServer) PluginActivate(writer http.ResponseWriter, req *http.Request) {
 	resp := &PluginActivateResponse{Implements: []string{volumeDriver}}
-	writeJSON(resp, &writer)
+	errJSON := writeJSON(resp, &writer)
+	if errJSON != nil {
+		writeError(pluginActivatePath, writer, req, http.StatusInternalServerError, errJSON)
+		return
+	}
 	log.WithFields(log.Fields{"resp": resp}).Info("Plugin activated ")
 }
 
@@ -76,14 +87,16 @@ func (s *NpipePluginServer) VolumeDriverCreate(writer http.ResponseWriter, req *
 	var volumeReq volume.Request
 	err := json.NewDecoder(req.Body).Decode(&volumeReq)
 	if err != nil {
-		log.WithFields(log.Fields{"req": req,
-			"err": err}).Error("Failed to service /VolumeDriver.Create request ")
-		http.Error(writer, err.Error(), 400)
+		writeError(volumeDriverCreatePath, writer, req, http.StatusBadRequest, err)
 		return
 	}
 
 	resp := (*s.driver).Create(volumeReq)
-	writeJSON(resp, &writer)
+	errJSON := writeJSON(resp, &writer)
+	if errJSON != nil {
+		writeError(volumeDriverCreatePath, writer, req, http.StatusInternalServerError, errJSON)
+		return
+	}
 	log.WithFields(log.Fields{"resp": resp}).Info("Serviced /VolumeDriver.Create ")
 }
 
@@ -112,5 +125,6 @@ func (s *NpipePluginServer) Init() {
 
 // Destroy shuts down the npipe listener.
 func (s *NpipePluginServer) Destroy() {
+	log.WithFields(log.Fields{"npipe": npipeAddr}).Info("Closing npipe listener ")
 	s.listener.Close()
 }
