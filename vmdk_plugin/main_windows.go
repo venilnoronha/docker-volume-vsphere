@@ -30,16 +30,7 @@ import (
 )
 
 const (
-	volumeDriver = "VolumeDriver"         // Docker volume driver type
-	npipeAddr    = `\\.\pipe\vsphere-dvs` // Plugin's npipe address
-
-	// Docker plugin handshake endpoint.
-	// Also see https://docs.docker.com/engine/extend/plugin_api/#handshake-api
-	pluginActivatePath = "/Plugin.Activate"
-
-	// Docker volume plugin endpoints.
-	// Also see https://docs.docker.com/engine/extend/plugins_volume/#volume-plugin-protocol
-	volumeDriverCreatePath = "/VolumeDriver.Create"
+	npipeAddr = `\\.\pipe\vsphere-dvs` // Plugin's npipe address
 )
 
 var (
@@ -64,35 +55,35 @@ func NewPluginServer(driverName string, driver *volume.Driver) *NpipePluginServe
 	return &NpipePluginServer{driver: driver, mux: http.NewServeMux()}
 }
 
-// writeJSON writes the JSON encoding of v to w, or returns an
-// error if marshalling fails.
-func writeJSON(v interface{}, w *http.ResponseWriter) error {
-	bytes, err := json.Marshal(v)
+// writeJSON writes the JSON encoding of resp to the writer.
+func writeJSON(resp interface{}, writer *http.ResponseWriter) error {
+	bytes, err := json.Marshal(resp)
 	if err == nil {
-		fmt.Fprintf(*w, string(bytes))
+		fmt.Fprintf(*writer, string(bytes))
 	}
 	return err
 }
 
-// PluginActivate writes the plugin's handshake response to w.
-func (s *NpipePluginServer) PluginActivate(w http.ResponseWriter, r *http.Request) {
+// PluginActivate writes the plugin's handshake response to the writer.
+func (s *NpipePluginServer) PluginActivate(writer http.ResponseWriter, req *http.Request) {
 	resp := &PluginActivateResponse{Implements: []string{volumeDriver}}
-	writeJSON(resp, &w)
+	writeJSON(resp, &writer)
 	log.WithFields(log.Fields{"resp": resp}).Info("Plugin activated ")
 }
 
-// VolumeDriverCreate creates a volume and writes the response to w.
-func (s *NpipePluginServer) VolumeDriverCreate(w http.ResponseWriter, r *http.Request) {
+// VolumeDriverCreate creates a volume and writes the response to the writer.
+func (s *NpipePluginServer) VolumeDriverCreate(writer http.ResponseWriter, req *http.Request) {
 	var volumeReq volume.Request
-	err := json.NewDecoder(r.Body).Decode(&volumeReq)
+	err := json.NewDecoder(req.Body).Decode(&volumeReq)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Failed to service /VolumeDriver.Create request")
-		http.Error(w, err.Error(), 400)
+		log.WithFields(log.Fields{"req": req,
+			"err": err}).Error("Failed to service /VolumeDriver.Create request ")
+		http.Error(writer, err.Error(), 400)
 		return
 	}
 
 	resp := (*s.driver).Create(volumeReq)
-	writeJSON(resp, &w)
+	writeJSON(resp, &writer)
 	log.WithFields(log.Fields{"resp": resp}).Info("Serviced /VolumeDriver.Create ")
 }
 
@@ -109,7 +100,7 @@ func (s *NpipePluginServer) Init() {
 	s.listener, err = winio.ListenPipe(npipeAddr, nil)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to initialize npipe at %s - exiting", npipeAddr)
-		log.WithFields(log.Fields{"err": err}).Error(msg)
+		log.WithFields(log.Fields{"err": err}).Fatal(msg)
 		fmt.Println(msg)
 		os.Exit(1)
 	}

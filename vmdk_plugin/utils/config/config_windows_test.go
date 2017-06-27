@@ -17,10 +17,11 @@ package config_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
+	"os"
 	"testing"
 )
 
 func TestWindowsPath(t *testing.T) {
-	assert.Equal(t, config.DefaultConfigPath, `C:\ProgramData\docker-volume-vsphere\docker-volume-vsphere.conf`)
-	assert.Equal(t, config.DefaultLogPath, `C:\Users\Administrator\AppData\Local\docker-volume-vsphere\logs\docker-volume-vsphere.log`)
+	assert.Equal(t, config.DefaultConfigPath, os.Getenv("PROGRAMDATA")+`\docker-volume-vsphere\docker-volume-vsphere.conf`)
+	assert.Equal(t, config.DefaultLogPath, os.Getenv("LOCALAPPDATA")+`\docker-volume-vsphere\logs\docker-volume-vsphere.log`)
 }

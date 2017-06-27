@@ -33,13 +33,6 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/config"
 )
 
-const (
-	photonDriver  = "photon"
-	vmdkDriver    = "vmdk"
-	vsphereDriver = "vsphere"
-	defaultPort   = 1019
-)
-
 // PluginServer responds to HTTP requests from Docker.
 type PluginServer interface {
 	// Init initializes the server.
