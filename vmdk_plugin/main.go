@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"runtime"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -133,6 +134,15 @@ func main() {
 		} else {
 			*driverName = vsphereDriver
 		}
+	}
+
+	// The windows plugin only supports the vsphere driver.
+	if runtime.GOOS == "windows" && *driverName != vsphereDriver {
+		msg := fmt.Sprintf("Plugin only supports the %s driver on Windows, ignoring parameter driver = %s.",
+			vsphereDriver, c.Driver)
+		log.Warning(msg)
+		fmt.Println(msg)
+		*driverName = vsphereDriver
 	}
 
 	log.WithFields(log.Fields{
