@@ -174,12 +174,13 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 
 	watchCtx, errWatch := fs.DevAttachWaitPrep()
 	if errWatch != nil {
-		log.WithFields(log.Fields{"Name": name, "error": errWatch}).Warning("Failed to watch disk attach ")
+		log.WithFields(log.Fields{"name": name, "error": errWatch}).Warning("Failed to watch disk attach ")
 	}
 
 	if d.useMockEsx {
 		dev, err := d.ops.RawAttach(name, nil)
 		if err != nil {
+			log.WithFields(log.Fields{"name": name, "error": err}).Error("RawAttach failed ")
 			return mountpoint, err
 		}
 		return mountpoint, fs.MountByDevicePath(mountpoint, fstype, string(dev[:]), false)
@@ -305,6 +306,7 @@ func (d *VolumeDriver) prepareCreateOptions(r volume.Request) {
 	_, fstypeRes := r.Options["fstype"]
 	_, cloneFromRes := r.Options["clone-from"]
 	if !fstypeRes && !cloneFromRes {
+		log.WithFields(log.Fields{"req": r}).Debugf("Setting fstype to %s ", fs.FstypeDefault)
 		r.Options["fstype"] = fs.FstypeDefault
 	}
 }
@@ -319,16 +321,16 @@ func (d *VolumeDriver) cloneFrom(r volume.Request) volume.Response {
 	return volume.Response{Err: ""}
 }
 
-// detachOrWarn detaches a volume, or prints a warning log on failure.
-func (d *VolumeDriver) detachOrWarn(name string, opts map[string]string) {
+// detach detaches a volume, or prints a warning log on failure.
+func (d *VolumeDriver) detach(name string, opts map[string]string) {
 	errDetach := d.ops.Detach(name, opts)
 	if errDetach != nil {
 		log.WithFields(log.Fields{"name": name, "error": errDetach}).Warning("Detach volume failed ")
 	}
 }
 
-// removeOrWarn removes a volume, or prints a warning log on failure.
-func (d *VolumeDriver) removeOrWarn(name string, opts map[string]string) {
+// remove removes a volume, or prints a warning log on failure.
+func (d *VolumeDriver) remove(name string, opts map[string]string) {
 	errRemove := d.ops.Remove(name, opts)
 	if errRemove != nil {
 		log.WithFields(log.Fields{"name": name, "error": errRemove}).Warning("Remove volume failed ")
@@ -337,8 +339,8 @@ func (d *VolumeDriver) removeOrWarn(name string, opts map[string]string) {
 
 // forceDetachAndRemove detaches a volume and then removes it, ignoring any errors.
 func (d *VolumeDriver) forceDetachAndRemove(name string, opts map[string]string) {
-	d.detachOrWarn(name, opts)
-	d.removeOrWarn(name, opts)
+	d.detach(name, opts)
+	d.remove(name, opts)
 }
 
 // No need to actually manifest the volume on the filesystem yet
