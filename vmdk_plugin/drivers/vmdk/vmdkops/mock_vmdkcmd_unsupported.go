@@ -16,9 +16,7 @@
 
 package vmdkops
 
-import (
-	"errors"
-)
+import "errors"
 
 // UnsupportedMockCmd struct.
 type UnsupportedMockCmd struct{}

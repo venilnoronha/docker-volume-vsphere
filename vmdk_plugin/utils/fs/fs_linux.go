@@ -77,6 +77,7 @@ func devAttachWaitPrep(devPath string) (*inotify.Watcher, error) {
 func DevAttachWait(watcher *inotify.Watcher, volDev *VolumeDevSpec) error {
 	device, err := getDevicePath(volDev)
 	if err != nil {
+		log.WithFields(log.Fields{"volDev": *volDev, "err": err}).Error("Failed to get device path ")
 		return err
 	}
 	devAttachWait(watcher, device)
@@ -133,6 +134,7 @@ func Mkdir(path string) error {
 func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 	device, err := getDevicePath(volDev)
 	if err != nil {
+		log.WithFields(log.Fields{"volDev": *volDev, "err": err}).Error("Failed to get device path ")
 		return err
 	}
 	return MkfsByDevicePath(fstype, label, device)
@@ -161,8 +163,8 @@ func MkfsByDevicePath(fstype string, label string, device string) error {
 	return nil
 }
 
-// AssertFsSupport checks whether the fstype filesystem is supported.
-func AssertFsSupport(fstype string) error {
+// VerifyFSSupport checks whether the fstype filesystem is supported.
+func VerifyFSSupport(fstype string) error {
 	supportedFs := mkfsLookup()
 	_, result := supportedFs[fstype]
 	if result == false {
@@ -197,6 +199,7 @@ func mkfsLookup() map[string]string {
 func Mount(mountpoint string, fstype string, volDev *VolumeDevSpec, isReadOnly bool) error {
 	device, err := getDevicePath(volDev)
 	if err != nil {
+		log.WithFields(log.Fields{"volDev": *volDev, "err": err}).Error("Failed to get device path ")
 		return err
 	}
 	return MountByDevicePath(mountpoint, fstype, device, isReadOnly)

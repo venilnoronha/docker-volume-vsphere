@@ -65,6 +65,7 @@ func (v VmdkOps) RawAttach(name string, opts map[string]string) ([]byte, error) 
 	log.Debugf("vmdkOps.Attach name=%s", name)
 	str, err := v.Cmd.Run("attach", name, opts)
 	if err != nil {
+		log.WithFields(log.Fields{"name": name, "opts": opts, "error": err}).Error("RawAttach failed ")
 		return nil, err
 	}
 	return str, nil
@@ -80,6 +81,8 @@ func (v VmdkOps) Attach(name string, opts map[string]string) (*fs.VolumeDevSpec,
 	var volDev fs.VolumeDevSpec
 	err = json.Unmarshal(str, &volDev)
 	if err != nil {
+		log.WithFields(log.Fields{"name": name, "opts": opts, "bytes": str,
+			"error": err}).Error("Failed to unmarshal ")
 		return nil, err
 	}
 	return &volDev, nil

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This is the filesystem interface for mounting volumes on the guest.
-
 package fs
 
 // VolumeDevSpec - volume spec returned from the server on an attach

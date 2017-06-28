@@ -145,7 +145,7 @@ func createBlockDevice(label string, opts map[string]string) error {
 	if _, result := opts["fstype"]; result == false {
 		opts["fstype"] = fs.FstypeDefault
 	}
-	errFstype := fs.AssertFsSupport(opts["fstype"])
+	errFstype := fs.VerifyFSSupport(opts["fstype"])
 	if errFstype != nil {
 		return fmt.Errorf("Not found mkfs for %s", opts["fstype"])
 	}

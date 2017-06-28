@@ -38,9 +38,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 )
 
-const (
-	version = "vSphere Volume Driver v0.4"
-)
+const version = "vSphere Volume Driver v0.4"
 
 // VolumeDriver - VMDK driver struct
 type VolumeDriver struct {
@@ -189,6 +187,7 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 
 	volDev, err := d.ops.Attach(name, nil)
 	if err != nil {
+		log.WithFields(log.Fields{"name": name, "error": err}).Error("Attach volume failed ")
 		return mountpoint, err
 	}
 
@@ -356,7 +355,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	}
 
 	// Check whether the fstype filesystem is supported.
-	errFstype := fs.AssertFsSupport(r.Options["fstype"])
+	errFstype := fs.VerifyFSSupport(r.Options["fstype"])
 	if errFstype != nil {
 		log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Error("Not found ")
 		return volume.Response{Err: errFstype.Error()}

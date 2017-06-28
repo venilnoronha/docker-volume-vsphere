@@ -158,7 +158,7 @@ func validateCreateOptions(r volume.Request) error {
 	}
 
 	// Check whether the fstype filesystem is supported.
-	errFstype := fs.AssertFsSupport(r.Options[fsTypeTag])
+	errFstype := fs.VerifyFSSupport(r.Options[fsTypeTag])
 	if errFstype != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"fstype": r.Options[fsTypeTag]}).Error("Not found ")
