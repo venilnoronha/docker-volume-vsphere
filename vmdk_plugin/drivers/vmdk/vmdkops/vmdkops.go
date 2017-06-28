@@ -19,6 +19,7 @@ package vmdkops
 import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/fs"
 )
 
 //
@@ -59,14 +60,29 @@ func (v VmdkOps) Remove(name string, opts map[string]string) error {
 	return err
 }
 
-// Attach a volume
-func (v VmdkOps) Attach(name string, opts map[string]string) ([]byte, error) {
+// RawAttach attaches a volume and returns a raw response.
+func (v VmdkOps) RawAttach(name string, opts map[string]string) ([]byte, error) {
 	log.Debugf("vmdkOps.Attach name=%s", name)
 	str, err := v.Cmd.Run("attach", name, opts)
 	if err != nil {
 		return nil, err
 	}
-	return str, err
+	return str, nil
+}
+
+// Attach attaches a volume and returns the disk's VolumeDevSpec.
+func (v VmdkOps) Attach(name string, opts map[string]string) (*fs.VolumeDevSpec, error) {
+	str, err := v.RawAttach(name, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var volDev fs.VolumeDevSpec
+	err = json.Unmarshal(str, &volDev)
+	if err != nil {
+		return nil, err
+	}
+	return &volDev, nil
 }
 
 // Detach a volume

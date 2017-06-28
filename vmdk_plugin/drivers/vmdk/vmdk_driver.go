@@ -1,4 +1,4 @@
-// Copyright 2016 VMware, Inc. All Rights Reserved.
+// Copyright 2016-2017 VMware, Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,10 +39,7 @@ import (
 )
 
 const (
-	devWaitTimeout   = 1 * time.Second
-	sleepBeforeMount = 1 * time.Second
-	watchPath        = "/dev/disk/by-path"
-	version          = "vSphere Volume Driver v0.4"
+	version = "vSphere Volume Driver v0.4"
 )
 
 // VolumeDriver - VMDK driver struct
@@ -65,7 +62,7 @@ func NewVolumeDriver(port int, useMockEsx bool, mountDir string, driverName stri
 	if useMockEsx {
 		d = &VolumeDriver{
 			useMockEsx: true,
-			ops:        vmdkops.VmdkOps{Cmd: vmdkops.MockVmdkCmd{}},
+			ops:        vmdkops.VmdkOps{Cmd: vmdkops.NewMockCmd()},
 			refCounts:  refcount.NewRefCountsMap(),
 		}
 	} else {
@@ -177,33 +174,34 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		return mountpoint, err
 	}
 
-	watcher, skipInotify := fs.DevAttachWaitPrep(name, watchPath)
-
-	// Have ESX attach the disk
-	dev, err := d.ops.Attach(name, nil)
-	if err != nil {
-		return mountpoint, err
+	watchCtx, errWatch := fs.DevAttachWaitPrep()
+	if errWatch != nil {
+		log.WithFields(log.Fields{"Name": name, "error": errWatch}).Warning("Failed to watch disk attach ")
 	}
 
 	if d.useMockEsx {
-		return mountpoint, fs.Mount(mountpoint, fstype, string(dev[:]), false)
+		dev, err := d.ops.RawAttach(name, nil)
+		if err != nil {
+			return mountpoint, err
+		}
+		return mountpoint, fs.MountByDevicePath(mountpoint, fstype, string(dev[:]), false)
 	}
 
-	device, err := fs.GetDevicePath(dev)
+	volDev, err := d.ops.Attach(name, nil)
 	if err != nil {
 		return mountpoint, err
 	}
 
-	if skipInotify {
-		time.Sleep(sleepBeforeMount)
-		return mountpoint, fs.Mount(mountpoint, fstype, device, false)
+	if errWatch != nil {
+		time.Sleep(fs.SleepBeforeMount)
+		return mountpoint, fs.Mount(mountpoint, fstype, volDev, false)
 	}
 
-	fs.DevAttachWait(watcher, name, device)
+	fs.DevAttachWait(watchCtx, volDev)
 
 	// May have timed out waiting for the attach to complete,
 	// attempt the mount anyway.
-	return mountpoint, fs.Mount(mountpoint, fstype, device, isReadOnly)
+	return mountpoint, fs.Mount(mountpoint, fstype, volDev, isReadOnly)
 }
 
 // UnmountVolume - Unmounts the volume and then requests detach
@@ -298,50 +296,70 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 	return volume.Response{Mountpoint: mountpoint}
 }
 
+// prepareCreateOptions sets default options for create request r.
+func (d *VolumeDriver) prepareCreateOptions(r volume.Request) {
+	if r.Options == nil {
+		r.Options = make(map[string]string)
+	}
+
+	// Use default fstype if both fstype and clone-from are not specified.
+	_, fstypeRes := r.Options["fstype"]
+	_, cloneFromRes := r.Options["clone-from"]
+	if !fstypeRes && !cloneFromRes {
+		r.Options["fstype"] = fs.FstypeDefault
+	}
+}
+
+// cloneFrom clones an existing volume.
+func (d *VolumeDriver) cloneFrom(r volume.Request) volume.Response {
+	errClone := d.ops.Create(r.Name, r.Options)
+	if errClone != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": errClone}).Error("Clone volume failed ")
+		return volume.Response{Err: errClone.Error()}
+	}
+	return volume.Response{Err: ""}
+}
+
+// detachOrWarn detaches a volume, or prints a warning log on failure.
+func (d *VolumeDriver) detachOrWarn(name string, opts map[string]string) {
+	errDetach := d.ops.Detach(name, opts)
+	if errDetach != nil {
+		log.WithFields(log.Fields{"name": name, "error": errDetach}).Warning("Detach volume failed ")
+	}
+}
+
+// removeOrWarn removes a volume, or prints a warning log on failure.
+func (d *VolumeDriver) removeOrWarn(name string, opts map[string]string) {
+	errRemove := d.ops.Remove(name, opts)
+	if errRemove != nil {
+		log.WithFields(log.Fields{"name": name, "error": errRemove}).Warning("Remove volume failed ")
+	}
+}
+
+// forceDetachAndRemove detaches a volume and then removes it, ignoring any errors.
+func (d *VolumeDriver) forceDetachAndRemove(name string, opts map[string]string) {
+	d.detachOrWarn(name, opts)
+	d.removeOrWarn(name, opts)
+}
+
 // No need to actually manifest the volume on the filesystem yet
 // (until Mount is called).
 // Name and driver specific options passed through to the ESX host
 
-// Create - create a volume.
+// Create creates a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
+	d.prepareCreateOptions(r)
 
-	if r.Options == nil {
-		r.Options = make(map[string]string)
-	}
 	// If cloning a existent volume, create and return
-	if _, result := r.Options["clone-from"]; result == true {
-		errClone := d.ops.Create(r.Name, r.Options)
-		if errClone != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": errClone}).Error("Clone volume failed ")
-			return volume.Response{Err: errClone.Error()}
-		}
-		return volume.Response{Err: ""}
+	if _, result := r.Options["clone-from"]; result {
+		return d.cloneFrom(r)
 	}
 
-	// Use default fstype if not specified
-	if _, result := r.Options["fstype"]; result == false {
-		r.Options["fstype"] = fs.FstypeDefault
-	}
-
-	// Get existent filesystem tools
-	supportedFs := fs.MkfsLookup()
-
-	// Verify the existence of fstype mkfs
-	mkfscmd, result := supportedFs[r.Options["fstype"]]
-	if result == false {
-		msg := "Not found mkfs for " + r.Options["fstype"]
-		msg += "\nSupported filesystems found: "
-		validfs := ""
-		for fs := range supportedFs {
-			if validfs != "" {
-				validfs += ", " + fs
-			} else {
-				validfs += fs
-			}
-		}
-		log.WithFields(log.Fields{"name": r.Name,
-			"fstype": r.Options["fstype"]}).Error("Not found ")
-		return volume.Response{Err: msg + validfs}
+	// Check whether the fstype filesystem is supported.
+	errFstype := fs.AssertFsSupport(r.Options["fstype"])
+	if errFstype != nil {
+		log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Error("Not found ")
+		return volume.Response{Err: errFstype.Error()}
 	}
 
 	errCreate := d.ops.Create(r.Name, r.Options)
@@ -354,56 +372,40 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name,
 		"fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
 
-	watcher, skipInotify := fs.DevAttachWaitPrep(r.Name, watchPath)
+	watchCtx, errWatch := fs.DevAttachWaitPrep()
+	if errWatch != nil {
+		log.WithFields(log.Fields{"Name": r.Name, "error": errWatch}).Warning("Failed to watch disk attach ")
+	}
 
-	dev, errAttach := d.ops.Attach(r.Name, nil)
+	volDev, errAttach := d.ops.Attach(r.Name, nil)
 	if errAttach != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errAttach}).Error("Attach volume failed, removing the volume ")
 		// An internal error for the attach may have the volume attached to this client,
 		// detach before removing below.
-		d.ops.Detach(r.Name, nil)
-		errRemove := d.ops.Remove(r.Name, nil)
-		if errRemove != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
-		}
+		d.forceDetachAndRemove(r.Name, nil)
 		return volume.Response{Err: errAttach.Error()}
 	}
 
-	device, errGetDevicePath := fs.GetDevicePath(dev)
-	if errGetDevicePath != nil {
-		log.WithFields(log.Fields{"name": r.Name,
-			"error": errGetDevicePath}).Error("Could not find attached device, removing the volume ")
-		errDetach := d.ops.Detach(r.Name, nil)
-		if errDetach != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": errDetach}).Warning("Detach volume failed ")
-		}
-		errRemove := d.ops.Remove(r.Name, nil)
-		if errRemove != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
-		}
-		return volume.Response{Err: errGetDevicePath.Error()}
-	}
-
-	if skipInotify {
-		time.Sleep(sleepBeforeMount)
+	if errWatch != nil {
+		time.Sleep(fs.SleepBeforeMount)
 	} else {
 		// Wait for the attach to complete, may timeout
 		// in which case we continue creating the file system.
-		fs.DevAttachWait(watcher, r.Name, device)
+		errAttachWait := fs.DevAttachWait(watchCtx, volDev)
+		if errAttachWait != nil {
+			log.WithFields(log.Fields{"name": r.Name,
+				"error": errAttachWait}).Error("Could not find attached device, removing the volume ")
+			d.forceDetachAndRemove(r.Name, nil)
+			return volume.Response{Err: errAttachWait.Error()}
+		}
 	}
-	errMkfs := fs.Mkfs(mkfscmd, r.Name, device)
+
+	errMkfs := fs.Mkfs(r.Options["fstype"], r.Name, volDev)
 	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errMkfs}).Error("Create filesystem failed, removing the volume ")
-		errDetach := d.ops.Detach(r.Name, nil)
-		if errDetach != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": errDetach}).Warning("Detach volume failed ")
-		}
-		errRemove := d.ops.Remove(r.Name, nil)
-		if errRemove != nil {
-			log.WithFields(log.Fields{"name": r.Name, "error": errRemove}).Warning("Remove volume failed ")
-		}
+		d.forceDetachAndRemove(r.Name, nil)
 		return volume.Response{Err: errMkfs.Error()}
 	}
 
