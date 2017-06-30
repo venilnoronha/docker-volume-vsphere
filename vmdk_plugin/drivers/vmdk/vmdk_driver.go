@@ -38,7 +38,7 @@ import (
 	"github.com/vmware/docker-volume-vsphere/vmdk_plugin/utils/refcount"
 )
 
-const version = "vSphere Volume Driver v0.4"
+const version = "vSphere Volume Driver v0.5"
 
 // VolumeDriver - VMDK driver struct
 type VolumeDriver struct {
