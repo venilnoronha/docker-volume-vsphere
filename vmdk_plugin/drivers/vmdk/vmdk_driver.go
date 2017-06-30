@@ -322,25 +322,27 @@ func (d *VolumeDriver) cloneFrom(r volume.Request) volume.Response {
 }
 
 // detach detaches a volume, or prints a warning log on failure.
-func (d *VolumeDriver) detach(name string, opts map[string]string) {
-	errDetach := d.ops.Detach(name, opts)
+func (d *VolumeDriver) detach(name string) error {
+	errDetach := d.ops.Detach(name, nil)
 	if errDetach != nil {
 		log.WithFields(log.Fields{"name": name, "error": errDetach}).Warning("Detach volume failed ")
 	}
+	return errDetach
 }
 
 // remove removes a volume, or prints a warning log on failure.
-func (d *VolumeDriver) remove(name string, opts map[string]string) {
-	errRemove := d.ops.Remove(name, opts)
+func (d *VolumeDriver) remove(name string) error {
+	errRemove := d.ops.Remove(name, nil)
 	if errRemove != nil {
 		log.WithFields(log.Fields{"name": name, "error": errRemove}).Warning("Remove volume failed ")
 	}
+	return errRemove
 }
 
-// forceDetachAndRemove detaches a volume and then removes it, ignoring any errors.
-func (d *VolumeDriver) forceDetachAndRemove(name string, opts map[string]string) {
-	d.detach(name, opts)
-	d.remove(name, opts)
+// detachAndRemove detaches a volume and then removes it, ignoring any errors.
+func (d *VolumeDriver) detachAndRemove(name string) {
+	d.detach(name)
+	d.remove(name)
 }
 
 // No need to actually manifest the volume on the filesystem yet
@@ -384,7 +386,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 			"error": errAttach}).Error("Attach volume failed, removing the volume ")
 		// An internal error for the attach may have the volume attached to this client,
 		// detach before removing below.
-		d.forceDetachAndRemove(r.Name, nil)
+		d.detachAndRemove(r.Name)
 		return volume.Response{Err: errAttach.Error()}
 	}
 
@@ -397,7 +399,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		if errAttachWait != nil {
 			log.WithFields(log.Fields{"name": r.Name,
 				"error": errAttachWait}).Error("Could not find attached device, removing the volume ")
-			d.forceDetachAndRemove(r.Name, nil)
+			d.detachAndRemove(r.Name)
 			return volume.Response{Err: errAttachWait.Error()}
 		}
 	}
@@ -406,7 +408,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	if errMkfs != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errMkfs}).Error("Create filesystem failed, removing the volume ")
-		d.forceDetachAndRemove(r.Name, nil)
+		d.detachAndRemove(r.Name)
 		return volume.Response{Err: errMkfs.Error()}
 	}
 
