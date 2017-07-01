@@ -37,8 +37,8 @@ func TestNewPluginServer(t *testing.T) {
 
 func initPluginServer() *NpipePluginServer {
 	server := NewPluginServer(mock, nil)
-	go server.Init()            // server.Init() is a blocking call
-	time.Sleep(2 * time.Second) // wait for goroutine to execute
+	go server.Init()                   // server.Init() blocks forever
+	time.Sleep(100 * time.Millisecond) // wait for goroutine to execute
 	return server
 }
 
