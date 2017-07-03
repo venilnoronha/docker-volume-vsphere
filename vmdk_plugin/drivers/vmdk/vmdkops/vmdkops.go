@@ -82,7 +82,13 @@ func (v VmdkOps) Attach(name string, opts map[string]string) (*fs.VolumeDevSpec,
 	err = json.Unmarshal(str, &volDev)
 	if err != nil {
 		log.WithFields(log.Fields{"name": name, "opts": opts, "bytes": str,
-			"error": err}).Error("Failed to unmarshal ")
+			"error": err}).Error("Failed to unmarshal, detaching volume ")
+		// RawAttach may have the volume attached to this client, so detach.
+		errDetach := v.Detach(name, nil)
+		if errDetach != nil {
+			log.WithFields(log.Fields{"name": name,
+				"error": errDetach}).Warning("Detach volume failed ")
+		}
 		return nil, err
 	}
 	return &volDev, nil

@@ -393,9 +393,7 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	if errAttach != nil {
 		log.WithFields(log.Fields{"name": r.Name,
 			"error": errAttach}).Error("Attach volume failed, removing the volume ")
-		// An internal error for the attach may have the volume attached to this client,
-		// detach before removing below.
-		d.detachAndRemove(r.Name)
+		d.remove(r.Name)
 		return volume.Response{Err: errAttach.Error()}
 	}
 
