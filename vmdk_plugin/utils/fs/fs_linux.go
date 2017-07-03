@@ -32,21 +32,20 @@ import (
 )
 
 const (
-	// FstypeDefault contains the default FS when not specified by the user.
+	// FstypeDefault contains the default FS to be used when not specified by the user.
 	FstypeDefault = "ext4"
-	// SleepBeforeMount specifies the time to sleep in case of watch failure.
-	SleepBeforeMount = 1 * time.Second
 
-	sysPciDevs      = "/sys/bus/pci/devices"   // All PCI devices on the host
-	sysPciSlots     = "/sys/bus/pci/slots"     // PCI slots on the host
-	pciAddrLen      = 10                       // Length of PCI dev addr
-	diskPathByDevID = "/dev/disk/by-id/wwn-0x" // Path for devices named by ID
-	scsiHostPath    = "/sys/class/scsi_host/"  // Path for scsi hosts
-	devWaitTimeout  = 10 * time.Second         // give it plenty of time to sense the attached disk
-	bdevPath        = "/sys/block/"
-	deleteFile      = "/device/delete"
-	watchPath       = "/dev/disk/by-id"
-	diskWatchPath   = "/dev/disk/by-path"
+	sleepBeforeMount = 1 * time.Second          // time to sleep in case of watch failure
+	sysPciDevs       = "/sys/bus/pci/devices"   // All PCI devices on the host
+	sysPciSlots      = "/sys/bus/pci/slots"     // PCI slots on the host
+	pciAddrLen       = 10                       // Length of PCI dev addr
+	diskPathByDevID  = "/dev/disk/by-id/wwn-0x" // Path for devices named by ID
+	scsiHostPath     = "/sys/class/scsi_host/"  // Path for scsi hosts
+	devWaitTimeout   = 10 * time.Second         // give it plenty of time to sense the attached disk
+	bdevPath         = "/sys/block/"
+	deleteFile       = "/device/delete"
+	watchPath        = "/dev/disk/by-id"
+	diskWatchPath    = "/dev/disk/by-path"
 )
 
 // BinSearchPath contains search paths for host binaries
@@ -111,6 +110,11 @@ loop:
 		}
 	}
 	watcher.Close()
+}
+
+// DevAttachWaitFallback performs basic fallback in case of watch failure.
+func DevAttachWaitFallback() {
+	time.Sleep(sleepBeforeMount)
 }
 
 // Mkdir creates a directory at the specified path

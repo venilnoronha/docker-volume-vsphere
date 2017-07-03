@@ -161,7 +161,7 @@ func validateCreateOptions(r volume.Request) error {
 	errFstype := fs.VerifyFSSupport(r.Options[fsTypeTag])
 	if errFstype != nil {
 		log.WithFields(log.Fields{"name": r.Name,
-			"fstype": r.Options[fsTypeTag]}).Error("Not found ")
+			"fstype": r.Options[fsTypeTag]}).Error("Not supported ")
 		return errFstype
 	}
 	return nil

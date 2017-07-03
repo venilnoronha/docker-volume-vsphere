@@ -60,7 +60,7 @@ func (v VmdkOps) Remove(name string, opts map[string]string) error {
 	return err
 }
 
-// RawAttach attaches a volume and returns a raw response.
+// RawAttach attaches a volume and returns `[]byte` representing the raw response string.
 func (v VmdkOps) RawAttach(name string, opts map[string]string) ([]byte, error) {
 	log.Debugf("vmdkOps.Attach name=%s", name)
 	str, err := v.Cmd.Run("attach", name, opts)

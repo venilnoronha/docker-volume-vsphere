@@ -28,7 +28,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
@@ -172,15 +171,16 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		return mountpoint, err
 	}
 
-	watchCtx, errWatch := fs.DevAttachWaitPrep()
-	if errWatch != nil {
-		log.WithFields(log.Fields{"name": name, "error": errWatch}).Warning("Failed to watch disk attach ")
+	waitCtx, errWait := fs.DevAttachWaitPrep()
+	if errWait != nil {
+		log.WithFields(log.Fields{"name": name,
+			"error": errWait}).Warning("Failed to initialize wait context, continuing however.. ")
 	}
 
 	if d.useMockEsx {
 		dev, err := d.ops.RawAttach(name, nil)
 		if err != nil {
-			log.WithFields(log.Fields{"name": name, "error": err}).Error("RawAttach failed ")
+			log.WithFields(log.Fields{"name": name, "error": err}).Error("Failed to attach volume ")
 			return mountpoint, err
 		}
 		return mountpoint, fs.MountByDevicePath(mountpoint, fstype, string(dev[:]), false)
@@ -192,12 +192,12 @@ func (d *VolumeDriver) MountVolume(name string, fstype string, id string, isRead
 		return mountpoint, err
 	}
 
-	if errWatch != nil {
-		time.Sleep(fs.SleepBeforeMount)
+	if errWait != nil {
+		fs.DevAttachWaitFallback()
 		return mountpoint, fs.Mount(mountpoint, fstype, volDev, false)
 	}
 
-	fs.DevAttachWait(watchCtx, volDev)
+	fs.DevAttachWait(waitCtx, volDev)
 
 	// May have timed out waiting for the attach to complete,
 	// attempt the mount anyway.
@@ -297,7 +297,7 @@ func (d *VolumeDriver) processMount(r volume.MountRequest) volume.Response {
 }
 
 // prepareCreateOptions sets default options for create request r.
-func (d *VolumeDriver) prepareCreateOptions(r volume.Request) {
+func (d *VolumeDriver) prepareCreateOptions(r volume.Request) error {
 	if r.Options == nil {
 		r.Options = make(map[string]string)
 	}
@@ -309,6 +309,17 @@ func (d *VolumeDriver) prepareCreateOptions(r volume.Request) {
 		log.WithFields(log.Fields{"req": r}).Debugf("Setting fstype to %s ", fs.FstypeDefault)
 		r.Options["fstype"] = fs.FstypeDefault
 	}
+
+	// Check whether the fstype filesystem is supported.
+	if _, fstypeRes = r.Options["fstype"]; fstypeRes {
+		err := fs.VerifyFSSupport(r.Options["fstype"])
+		if err != nil {
+			log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"],
+				"error": err}).Error("Not supported ")
+			return err
+		}
+	}
+	return nil
 }
 
 // cloneFrom clones an existing volume.
@@ -351,18 +362,15 @@ func (d *VolumeDriver) detachAndRemove(name string) {
 
 // Create creates a volume.
 func (d *VolumeDriver) Create(r volume.Request) volume.Response {
-	d.prepareCreateOptions(r)
+	err := d.prepareCreateOptions(r)
+	if err != nil {
+		log.WithFields(log.Fields{"name": r.Name, "error": err}).Error("Failed to prepare options ")
+		return volume.Response{Err: err.Error()}
+	}
 
 	// If cloning a existent volume, create and return
 	if _, result := r.Options["clone-from"]; result {
 		return d.cloneFrom(r)
-	}
-
-	// Check whether the fstype filesystem is supported.
-	errFstype := fs.VerifyFSSupport(r.Options["fstype"])
-	if errFstype != nil {
-		log.WithFields(log.Fields{"name": r.Name, "fstype": r.Options["fstype"]}).Error("Not found ")
-		return volume.Response{Err: errFstype.Error()}
 	}
 
 	errCreate := d.ops.Create(r.Name, r.Options)
@@ -375,9 +383,10 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 	log.WithFields(log.Fields{"name": r.Name,
 		"fstype": r.Options["fstype"]}).Info("Attaching volume and creating filesystem ")
 
-	watchCtx, errWatch := fs.DevAttachWaitPrep()
-	if errWatch != nil {
-		log.WithFields(log.Fields{"Name": r.Name, "error": errWatch}).Warning("Failed to watch disk attach ")
+	waitCtx, errWait := fs.DevAttachWaitPrep()
+	if errWait != nil {
+		log.WithFields(log.Fields{"name": r.Name,
+			"error": errWait}).Warning("Failed to initialize wait context, continuing however.. ")
 	}
 
 	volDev, errAttach := d.ops.Attach(r.Name, nil)
@@ -390,12 +399,12 @@ func (d *VolumeDriver) Create(r volume.Request) volume.Response {
 		return volume.Response{Err: errAttach.Error()}
 	}
 
-	if errWatch != nil {
-		time.Sleep(fs.SleepBeforeMount)
+	if errWait != nil {
+		fs.DevAttachWaitFallback()
 	} else {
 		// Wait for the attach to complete, may timeout
 		// in which case we continue creating the file system.
-		errAttachWait := fs.DevAttachWait(watchCtx, volDev)
+		errAttachWait := fs.DevAttachWait(waitCtx, volDev)
 		if errAttachWait != nil {
 			log.WithFields(log.Fields{"name": r.Name,
 				"error": errAttachWait}).Error("Could not find attached device, removing the volume ")
