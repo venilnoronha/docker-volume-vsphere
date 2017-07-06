@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	devChangeTimeout = 1 // Number of seconds to wait for a Win32_DeviceChangeEvent
+	devChangeTimeoutSec = 1 // Number of seconds to wait for a Win32_DeviceChangeEvent
 
 	// PowerShell script to register and wait for a Win32_DeviceChangeEvent.
 	// The script blocks until a Win32_DeviceChangeEvent occurs or the event times out.
@@ -70,7 +70,7 @@ func (w *DeviceWatcher) Init() {
 
 // awaitEventAndEmit awaits and emits a device change event or an error.
 func (w *DeviceWatcher) awaitEventAndEmit() {
-	script := fmt.Sprintf(devChangeWaitScript, devChangeTimeout)
+	script := fmt.Sprintf(devChangeWaitScript, devChangeTimeoutSec)
 	out, err := exec.Command(powershell, script).Output()
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Error("Failed to watch device event ")

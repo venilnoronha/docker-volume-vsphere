@@ -33,6 +33,9 @@ func TestDeviceWatcherInit(t *testing.T) {
 	watcher.Init()
 	select {
 	case event := <-watcher.Event:
+		// Only EventTimedOut will be tested here.
+		// Mocking a disk attach isn't easily possible so DeviceChangeEvent will
+		// be tested via e2e tests.
 		assert.NotNil(t, event, "Event chan shouldn't return nil")
 	case err := <-watcher.Error:
 		assert.NotNil(t, err, "Error chan shouldn't return nil")

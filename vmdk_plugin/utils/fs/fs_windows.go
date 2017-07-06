@@ -31,12 +31,12 @@ const (
 	// FstypeDefault specifies the default FS to be used when not specified by the user.
 	FstypeDefault = ntfs
 
-	maxDiskAttachWait  = 10 * time.Second // Max time to wait for a disk to be attached
-	ntfs               = "ntfs"
-	powershell         = "powershell"
-	diskNotFound       = "DiskNotFound"
-	diskpart           = "diskpart"
-	diskpartSuccessMsg = "DiskPart successfully formatted the volume."
+	maxDiskAttachWaitSec = 10 * time.Second // Max time to wait for a disk to be attached
+	ntfs                 = "ntfs"
+	powershell           = "powershell"
+	diskNotFound         = "DiskNotFound"
+	diskpart             = "diskpart"
+	diskpartSuccessMsg   = "DiskPart successfully formatted the volume."
 
 	// PowerShell script to identify the disk number given a scsi controller
 	// number and a unit number. The script returns an integer if the disk was
@@ -57,7 +57,7 @@ const (
 			If ($uiNum -eq '%s' -And $addr -eq '%s') {
 				Write-Host ""
 				Get-WmiObject Win32_DiskDrive |
-				Where-Object { $_.PNPDeviceId -eq $instanceId} |
+				Where-Object { $_.PNPDeviceId -eq $instanceId } |
 				Select-Object -ExpandProperty Index
 				exit
 			}
@@ -83,6 +83,7 @@ const (
 // VerifyFSSupport checks whether the fstype filesystem is supported.
 func VerifyFSSupport(fstype string) error {
 	if fstype != ntfs {
+		log.WithFields(log.Fields{"fstype": fstype}).Error("Unsupported fstype ")
 		return fmt.Errorf("Not found mkfs for %s\nSupported filesystems: %s",
 			fstype, ntfs)
 	}
@@ -106,7 +107,11 @@ func DevAttachWait(watcher *DeviceWatcher, volDev *VolumeDevSpec) error {
 		case event := <-watcher.Event:
 			log.WithFields(log.Fields{"volDev": *volDev,
 				"event": event}).Info("Watcher emitted an event ")
-			if diskNum, _ := getDiskNum(volDev); diskNum != "" {
+			diskNum, err := getDiskNum(volDev)
+			if err != nil {
+				log.WithFields(log.Fields{"volDev": *volDev,
+					"err": err}).Warn("Couldn't map volDev to diskNum, continuing.. ")
+			} else {
 				log.WithFields(log.Fields{"volDev": *volDev,
 					"diskNum": diskNum}).Info("Successfully mapped volDev to diskNum ")
 				return nil
@@ -118,7 +123,7 @@ func DevAttachWait(watcher *DeviceWatcher, volDev *VolumeDevSpec) error {
 				"err": err}).Error("Watcher returned an error ")
 			return err
 
-		case <-time.After(maxDiskAttachWait):
+		case <-time.After(maxDiskAttachWaitSec):
 			msg := "Disk mapping timed out "
 			log.WithFields(log.Fields{"volDev": *volDev}).Error(msg)
 			return errors.New(msg)
@@ -145,6 +150,7 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 		return err
 	}
 
+	// The diskpart utility consumes the script via stdin and formats a disk.
 	cmd := exec.Command(diskpart)
 	stdin, _ := cmd.StdinPipe()
 	defer stdin.Close()
