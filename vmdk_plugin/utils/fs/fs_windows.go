@@ -38,6 +38,7 @@ const (
 	diskpart             = "diskpart"
 	diskpartSuccessMsg   = "DiskPart successfully formatted the volume."
 
+	// Using a PowerShell script here due to lack of a functional Go WMI library.
 	// PowerShell script to identify the disk number given a scsi controller
 	// number and a unit number. The script returns an integer if the disk was
 	// found, else it returns DiskNotFound.
@@ -107,8 +108,7 @@ func DevAttachWait(watcher *DeviceWatcher, volDev *VolumeDevSpec) error {
 		case event := <-watcher.Event:
 			log.WithFields(log.Fields{"volDev": *volDev,
 				"event": event}).Info("Watcher emitted an event ")
-			diskNum, err := getDiskNum(volDev)
-			if err != nil {
+			if diskNum, err := getDiskNum(volDev); err != nil {
 				log.WithFields(log.Fields{"volDev": *volDev,
 					"err": err}).Warn("Couldn't map volDev to diskNum, continuing.. ")
 			} else {
@@ -138,6 +138,7 @@ func DevAttachWaitFallback() {
 
 // Mkdir creates a directory at the specified path.
 func Mkdir(path string) error {
+	// TODO: Implement for the volume mount workflow.
 	return nil
 }
 
@@ -174,11 +175,13 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 
 // Mount mounts the filesystem on the volDev at the given mountpoint.
 func Mount(mountpoint string, fstype string, volDev *VolumeDevSpec, isReadOnly bool) error {
+	// TODO: Implement for the volume mount workflow.
 	return nil
 }
 
 // Unmount unmounts a disk from the given mount point.
 func Unmount(mountpoint string) error {
+	// TODO: Implement for the volume unmount workflow.
 	return nil
 }
 

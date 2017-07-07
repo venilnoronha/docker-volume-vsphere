@@ -13,6 +13,8 @@
 // limitations under the License.
 
 // Device watching logic for Windows OS.
+// This code is to be called when a device shows on a bus. The code will ensure
+// that a newly attached disk is ready for use by waiting until it's fully accessible.
 
 package fs
 
@@ -26,6 +28,7 @@ import (
 const (
 	devChangeTimeoutSec = 1 // Number of seconds to wait for a Win32_DeviceChangeEvent
 
+	// Using a PowerShell script here due to lack of a functional Go WMI library.
 	// PowerShell script to register and wait for a Win32_DeviceChangeEvent.
 	// The script blocks until a Win32_DeviceChangeEvent occurs or the event times out.
 	devChangeWaitScript = `
