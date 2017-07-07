@@ -198,7 +198,7 @@ func getDiskNum(volDev *VolumeDevSpec) (string, error) {
 	log.WithFields(log.Fields{"volDev": *volDev,
 		"out": string(out)}).Info("Disk mapping script executed ")
 
-	diskNum := tailSegment(out, lf, 2)
+	diskNum := strings.Replace(tailSegment(out, lf, 2), cr, "", -1)
 	if diskNum == diskNotFound {
 		msg := fmt.Sprintf("Could not identify disk for controller = %s, unit = %s",
 			volDev.ControllerPciSlotNumber, volDev.Unit)

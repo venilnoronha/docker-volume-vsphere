@@ -17,6 +17,7 @@
 package fs
 
 const (
+	cr   = "\r"   // carriage return
 	lf   = "\n"   // line feed
 	crlf = "\r\n" // carriage return line feed
 )
