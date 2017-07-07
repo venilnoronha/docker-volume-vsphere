@@ -149,7 +149,7 @@ func Mkfs(fstype string, label string, volDev *VolumeDevSpec) error {
 	out, err := exec.Command(powershell, script).Output()
 	if err != nil {
 		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
-			"diskNum": diskNum, "err": err}).Error("Format disk script failed to execute ")
+			"diskNum": diskNum, "err": err}).Error("Format disk script failed ")
 		return err
 	} else {
 		log.WithFields(log.Fields{"fstype": fstype, "label": label, "volDev": *volDev,
