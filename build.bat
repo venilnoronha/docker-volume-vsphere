@@ -15,6 +15,21 @@
 :: Script for writing vsphere.json into the docker plugin config directory and
 :: building vmci_client.dll and vdvs.exe.
 
+:: Build Instructions
+:: ==================
+:: The plugin can be built on Windows 2016 Server and Windows 10 Pro/Enterprise/Education (anniversary release) VMs.
+::
+:: Dependencies
+:: ------------
+::   * Golang
+::   * MSVC Build Tools 2017
+::   * mingw-w64 for gcc, which is required for CGO in Go.
+::
+:: Building
+:: --------
+::   Start cmd and cd to the docker-volume-vsphere directory.
+::   Execute build.bat.
+
 :: ---- Setup ----
 @echo off
 set projectRoot=%cd%
