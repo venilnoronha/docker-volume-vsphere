@@ -114,9 +114,8 @@ func (d *VolumeDriver) List(r volume.Request) volume.Response {
 		// volname@Local2, which causes the `docker volume ls` command to hang.
 		// So, we explicitly convert volume names using the platform specific
 		// normalizeVolumeName func.
-		name := normalizeVolumeName(vol.Name)
-		mountpoint := d.GetMountPoint(vol.Name)
-		responseVol := volume.Volume{Name: name, Mountpoint: mountpoint}
+		responseVol := volume.Volume{Name: normalizeVolumeName(vol.Name),
+			Mountpoint: d.GetMountPoint(vol.Name)}
 		responseVolumes = append(responseVolumes, &responseVol)
 	}
 	return volume.Response{Volumes: responseVolumes}
