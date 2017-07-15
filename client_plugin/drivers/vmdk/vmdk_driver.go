@@ -22,7 +22,7 @@ package vmdk
 // Serves requests from Docker Engine related to VMDK volume operations.
 // Depends on vmdk-opsd service to be running on hosting ESX
 // (see ./esx_service)
-///
+//
 
 import (
 	"flag"
@@ -109,8 +109,14 @@ func (d *VolumeDriver) List(r volume.Request) volume.Response {
 	}
 	responseVolumes := make([]*volume.Volume, 0, len(volumes))
 	for _, vol := range volumes {
+		// Paths are case-insensitive on Windows, so Docker only supports
+		// lower-case volume names. The VMDK Ops service returns names like
+		// volname@Local2, which causes the `docker volume ls` command to hang.
+		// So, we explicitly convert volume names using the platform specific
+		// normalizeVolumeName func.
+		name := normalizeVolumeName(vol.Name)
 		mountpoint := d.GetMountPoint(vol.Name)
-		responseVol := volume.Volume{Name: vol.Name, Mountpoint: mountpoint}
+		responseVol := volume.Volume{Name: name, Mountpoint: mountpoint}
 		responseVolumes = append(responseVolumes, &responseVol)
 	}
 	return volume.Response{Volumes: responseVolumes}
