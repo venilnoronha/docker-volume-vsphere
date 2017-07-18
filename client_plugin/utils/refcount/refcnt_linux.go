@@ -16,4 +16,5 @@
 
 package refcount
 
+// DockerHostAddr is the docker engine sock path on Linux.
 const DockerHostAddr = "unix:///var/run/docker.sock"

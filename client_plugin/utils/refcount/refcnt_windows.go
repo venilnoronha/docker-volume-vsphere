@@ -16,4 +16,5 @@
 
 package refcount
 
+// DockerHostAddr is the docker engine npipe address on Windows.
 const DockerHostAddr = "npipe:////./pipe/docker_engine"

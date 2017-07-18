@@ -360,12 +360,13 @@ func getDevicePath(volDev *VolumeDevSpec) (string, error) {
 // GetMountInfo returns a map of mounted volumes and devices.
 func GetMountInfo(mountRoot string) (map[string]string, error) {
 	volumeMountMap := make(map[string]string) // map [volume mount path] -> device
-	data, err := ioutil.ReadFile(linuxMountsFile)
 
+	data, err := ioutil.ReadFile(linuxMountsFile)
 	if err != nil {
 		log.Errorf("Can't get info from %s (%v)", linuxMountsFile, err)
 		return volumeMountMap, err
 	}
+	log.WithFields(log.Fields{"data": string(data)}).Info("Mounts read successfully")
 
 	for _, line := range strings.Split(string(data), lf) {
 		field := strings.Fields(line)
@@ -378,5 +379,7 @@ func GetMountInfo(mountRoot string) (map[string]string, error) {
 		}
 		volumeMountMap[filepath.Base(field[1])] = field[0]
 	}
+
+	log.WithFields(log.Fields{"map": volumeMountMap}).Info("Successfully retrieved mounts")
 	return volumeMountMap, nil
 }
