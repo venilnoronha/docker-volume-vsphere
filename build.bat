@@ -53,7 +53,7 @@ echo Found Go.
 :: Verify that MSVC Build Tools are accessible.
 if not exist "%msvcBatPath%" (
 	echo ERROR: Couldn't find Microsoft Visual C++ Build Tools.
-	echo Download URL: https://www.visualstudio.com/downloads/#build-tools-for-visual-studio-2017
+	echo Download URL: http://landinghub.visualstudio.com/visual-cpp-build-tools
 	exit /B
 )
 echo Found Microsoft Visual C++ Build Tools.
