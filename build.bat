@@ -110,5 +110,6 @@ move /y %vmdkopsDir%\vmci_client.dll %winBuildDir%
 move /y vdvs.exe %winBuildDir%
 echo Successfully moved binaries to the build directory.
 
+cd %projectRoot%
 echo vDVS build complete.
 echo Binaries are available under %winBuildDir%.
