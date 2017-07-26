@@ -12,23 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This util exposes util to invoke remove commands using ssh
+// Support for basic utility/helper methods used in tests on the windows platform.
 
-package ssh
+// +build runoncewin
+
+package inputparams
 
 import (
 	"log"
-	"os/exec"
-	"strings"
+	"os"
 )
 
-// InvokeCommandLocally - can be consumed by test directly to invoke
-// any command locally.
-// cmd: A command string to be executed on the remote host as per
-func InvokeCommandLocally(cmd string) (string, error) {
-	out, err := exec.Command("sh", "-c", cmd).CombinedOutput()
-	if err != nil {
-		log.Printf("Failed to invoke command [%s]: %v", cmd, err)
+// volNameCharset is the valid set of characters for volume name generation.
+const volNameCharset = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+// getDockerHosts returns a slice of Docker host VM IP addresses.
+func getDockerHosts() []string {
+	dockerHosts := []string{
+		os.Getenv("WIN_VM1"),
 	}
-	return strings.TrimSpace(string(out[:])), err
+	if dockerHosts[0] == "" {
+		log.Fatal("A docker host is needed to run tests.")
+	}
+	return dockerHosts
 }
