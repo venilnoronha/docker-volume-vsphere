@@ -14,7 +14,7 @@
 
 // Exposes util to invoke remote commands on non-windows hosts via ssh.
 
-// +build !runoncewin
+// +build !winutil
 
 package ssh
 
