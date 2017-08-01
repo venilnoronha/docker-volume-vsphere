@@ -37,6 +37,11 @@ BUILD_LOC=$TMP_LOC/build
 PLUGIN_LOC=$TMP_LOC/plugin_dockerbuild
 COMMON_VARS="../Commonvars.mk"
 VMDK_OPS_CONFIG=/etc/vmware/vmdkops/log_config.json
+PLUGIN_SRC_ZIP=vdvs-src.zip
+PLUGIN_BIN_ZIP=vdvs-bin.zip
+WIN_TEMP_DIR=C:\\Users\\root\\AppData\\Local\\Temp
+WIN_PLUGIN_SRC_DIR=C:\\Users\\root\\go\\src\\github.com\\vmware\\docker-volume-vsphere
+WIN_PLUGIN_BIN_ZIP_LOC=$WIN_PLUGIN_SRC_DIR\\build\\windows\\docker-volume-vsphere.zip
 
 # VM Functions
 
@@ -87,6 +92,49 @@ function deployplugin {
         managedPluginSanityCheck
         $SSH $TARGET "cd $PLUGIN_LOC ; DOCKER_HUB_REPO=$DOCKER_HUB_REPO VERSION_TAG=$VERSION_TAG EXTRA_TAG=$EXTRA_TAG make push clean"
     done
+}
+
+function deploypluginwindows {
+    log "Compressing source into $PLUGIN_SRC_ZIP..."
+    cd $PLUGIN_SRC_DIR
+    rm -f $PLUGIN_SRC_ZIP
+    stashName=`git stash create`;
+    git archive --format zip --output $PLUGIN_SRC_ZIP $stashName
+
+    for ip in $IP_LIST
+    do
+        TARGET=root@$ip
+
+        log "Cleaning up older files from $TARGET..."
+        $SSH $TARGET <<-EOF
+            powershell Remove-Item -Recurse -Force $WIN_PLUGIN_SRC_DIR
+		EOF
+        # EOF needs to be tab indented
+
+        log "Transferring $PLUGIN_SRC_ZIP to $TARGET..."
+        scp $PLUGIN_SRC_ZIP $TARGET:$WIN_TEMP_DIR
+
+        log "Extracting $PLUGIN_SRC_ZIP on $TARGET..."
+        $SSH $TARGET "powershell Expand-Archive $WIN_TEMP_DIR\\$PLUGIN_SRC_ZIP -DestinationPath $WIN_PLUGIN_SRC_DIR"
+
+        log "Building windows plugin on $TARGET..."
+        $SSH $TARGET <<-EOF
+            cd $WIN_PLUGIN_SRC_DIR
+            build.bat
+		EOF
+        # EOF needs to be tab indented
+
+        log "Installing plugin as a windows service on $TARGET..."
+        $SSH $TARGET <<-EOF
+            cd $WIN_PLUGIN_SRC_DIR
+            cp $WIN_PLUGIN_BIN_ZIP_LOC $PLUGIN_BIN_ZIP
+            powershell -ExecutionPolicy ByPass -File install-vdvs.ps1 "file:///$WIN_PLUGIN_SRC_DIR\\$PLUGIN_BIN_ZIP" -Force
+		EOF
+        # EOF needs to be tab indented
+    done
+
+    log "Cleaning up..."
+    rm -f $PLUGIN_SRC_ZIP
 }
 
 function managedPluginSanityCheck {
@@ -394,6 +442,10 @@ deployplugin)
             usage "Missing params: plugin/binary/script folder"
         fi
         deployplugin
+        ;;
+deploypluginwindows)
+        PLUGIN_SRC_DIR="$2"
+        deploypluginwindows
         ;;
 *)
         usage "Unknown function:  \"$FUNCTION_NAME\""

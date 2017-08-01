@@ -93,6 +93,8 @@ VMDKOPS_TEST_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
+PLUGIN_SRC_DIR := ../
+
 COMMON_SRC = utils/log_formatter/log_formatter.go \
 	utils/refcount/refcnt.go utils/plugin_server/plugin_server.go \
 	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go \
@@ -288,6 +290,7 @@ TMP_LOC := /tmp/$(PLUGNAME)
 DEPLOY_VM_SH  := $(DEPLOY_TOOLS) deployvm
 DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS) deployvmtest
 DEPLOY_VM_PLUGIN_SH := $(DEPLOY_TOOLS) deployplugin
+DEPLOY_PLUGIN_WINDOWS_VM_SH := $(DEPLOY_TOOLS) deploypluginwindows
 DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
 DEPLOY_ESX_FOR_UPGRADE := $(DEPLOY_TOOLS) deployesxForUpgrade
 CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
@@ -319,6 +322,8 @@ deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
 deploy-vm-plugin:
 	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+deploy-plugin-windows-vm:
+	$(DEPLOY_PLUGIN_WINDOWS_VM_SH) "$(WIN_VM1)" $(PLUGIN_SRC_DIR)
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
@@ -381,7 +386,11 @@ test-e2e:
 	$(log_target)
 	$(BUILD) test-e2e-runalways
 	$(BUILD) test-e2e-runonce
-	# TODO: Enable $(BUILD) test-e2e-runonce-windows once Windows VM is available locally.
+
+# An end-to-end windows test target for vSphere Docker Volume Driver
+test-e2e-windows:
+	$(log_target)
+	$(BUILD) test-e2e-runonce-windows
 
 #
 # E2E test target to control test run on CI.

@@ -34,7 +34,8 @@
 # Command line parameters
 param (
     [string] $uri,
-    [switch] $uninstall
+    [switch] $uninstall,
+    [switch] $Force
 )
 
 # Define the constants
@@ -66,8 +67,7 @@ $svc = Get-Service | Where-Object {$_.Name -eq $svcName}
 # Handle uninstallation
 if ($uninstall) {
     if ($svc) {
-        $confirmUninstall = Read-Host "Do you really want to uninstall $svcName [Y/N]?"
-        if ($confirmUninstall -eq "Y") {
+        if ($Force -Or ($result = Read-Host "Do you really want to uninstall $svcName [Y/N]?") -eq "Y") {
             Uninstall-Service($svc)
         }
     } else {
@@ -78,15 +78,14 @@ if ($uninstall) {
 
 # Check URI parameter for installation process
 if (! $uri) {
-     echo "Usage: install-vdvs.ps1 [[-uri] <String>] [-uninstall]"
+     echo "Usage: install-vdvs.ps1 [[-uri] <String>] [-uninstall] [-Force]"
      return
 }
 
 # Handle reinstallation
 if ($svc) {
     echo "Windows service $svcName is already installed."
-    $reinstall = Read-Host "Do you want to reinstall $svcName [Y/N]?"
-    if ($reinstall -eq "Y") {
+    if ($Force -Or ($result = Read-Host "Do you want to reinstall $svcName [Y/N]?") -eq "Y") {
         Uninstall-Service($svc)
     } else {
         return
