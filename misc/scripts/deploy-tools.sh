@@ -106,10 +106,7 @@ function deploypluginwindows {
         TARGET=root@$ip
 
         log "Cleaning up older files from $TARGET..."
-        $SSH $TARGET <<-EOF
-            powershell Remove-Item -Recurse -Force $WIN_PLUGIN_SRC_DIR
-		EOF
-        # EOF needs to be tab indented
+        $SSH $TARGET "powershell Remove-Item -Recurse -Force $WIN_PLUGIN_SRC_DIR"
 
         log "Transferring $PLUGIN_SRC_ZIP to $TARGET..."
         scp $PLUGIN_SRC_ZIP $TARGET:$WIN_TEMP_DIR
@@ -118,11 +115,7 @@ function deploypluginwindows {
         $SSH $TARGET "powershell Expand-Archive $WIN_TEMP_DIR\\$PLUGIN_SRC_ZIP -DestinationPath $WIN_PLUGIN_SRC_DIR"
 
         log "Building windows plugin on $TARGET..."
-        $SSH $TARGET <<-EOF
-            cd $WIN_PLUGIN_SRC_DIR
-            build.bat
-		EOF
-        # EOF needs to be tab indented
+        $SSH $TARGET "cd $WIN_PLUGIN_SRC_DIR && build.bat"
 
         log "Installing plugin as a windows service on $TARGET..."
         $SSH $TARGET <<-EOF

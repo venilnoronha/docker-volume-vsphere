@@ -16,6 +16,10 @@
 # ============================================================================
 # Run the script with the plugin url as the parameter in a PowerShell session:
 # PS C:\Users\Administrator> .\install-vdvs.ps1 <vdvs-download-url>
+#
+# The -Force parameter suppresses any confirmation prompt and performs an
+# affirmative action. For example, supplying -Force during installation will
+# implicitly uninstall the plugin if it was already installed.
 # ============================================================================
 
 <#
@@ -24,9 +28,9 @@
 .DESCRIPTION
     This script helps to download, install, uninstall, and re-install VMware vSphere Docker Volume Plugin on your system.
 .EXAMPLE
-   ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere.zip
+    ./install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=docker-volume-vsphere.zip
 .EXAMPLE
-   ./install-vdvs.ps1 -uninstall
+    ./install-vdvs.ps1 -uninstall
 .LINK
     https://vmware.github.io/docker-volume-vsphere/
 #>
