@@ -19,7 +19,9 @@
 #
 # The -Force parameter suppresses any confirmation prompt and performs an
 # affirmative action. For example, supplying -Force during installation will
-# implicitly uninstall the plugin if it was already installed.
+# uninstall any previous installation of the plugin, without confirmation.
+# Supplying -Force during uninstallation suppresses the confirmation prompt
+# and uninstalls the plugin.
 # ============================================================================
 
 <#
