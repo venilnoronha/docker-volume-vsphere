@@ -18,6 +18,7 @@ package plugin_server
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 
@@ -26,7 +27,34 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const npipeAddr = `\\.\pipe\vsphere-dvs` // Plugin's npipe address
+const (
+	// npipeAddr is the plugin's npipe address.
+	npipeAddr = "//./pipe/vsphere-dvs"
+
+	// pluginsPath is the Docker plugins directory path.
+	pluginsPath = `C:\ProgramData\docker\plugins\`
+
+	// configFilePath is the plugin's config file path.
+	configFilePath = pluginsPath + "vsphere.json"
+)
+
+// pluginConfig is the plugin config.
+var pluginConfig = fmt.Sprintf(`{ "Name": "vsphere", "Addr": "npipe://%s" }`, npipeAddr)
+
+// writePluginConfig writes the plugin config to the Docker plugins directory.
+func writePluginConfig() {
+	if err := os.MkdirAll(pluginsPath, 0755); err != nil {
+		log.WithFields(log.Fields{"path": pluginsPath,
+			"err": err}).Fatal("Failed to create plugin config directory ")
+		panic("Failed to create plugin config directory")
+	}
+
+	if err := ioutil.WriteFile(configFilePath, []byte(pluginConfig), 0644); err != nil {
+		log.WithFields(log.Fields{"path": configFilePath,
+			"err": err}).Fatal("Failed to write plugin config ")
+		panic("Failed to write plugin config")
+	}
+}
 
 // NpipePluginServer serves HTTP requests from Docker over windows npipe.
 type NpipePluginServer struct {
@@ -43,6 +71,8 @@ func NewPluginServer(driverName string, driver *volume.Driver) *NpipePluginServe
 // Init initializes the npipe listener which serves HTTP requests
 // from Docker using the HTTP mux.
 func (s *NpipePluginServer) Init() {
+	writePluginConfig()
+
 	var err error
 	s.listener, err = winio.ListenPipe(npipeAddr, nil)
 	if err != nil {
