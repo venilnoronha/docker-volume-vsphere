@@ -289,8 +289,9 @@ TMP_LOC := /tmp/$(PLUGNAME)
 # scripts started locally to deploy to and clean up test machines
 DEPLOY_VM_SH  := $(DEPLOY_TOOLS) deployvm
 DEPLOY_VM_TEST_SH  := $(DEPLOY_TOOLS) deployvmtest
-DEPLOY_VM_PLUGIN_SH := $(DEPLOY_TOOLS) deployplugin
-DEPLOY_PLUGIN_WINDOWS_VM_SH := $(DEPLOY_TOOLS) deploypluginwindows
+BUILD_PLUGIN_SH := $(DEPLOY_TOOLS) buildplugin
+BUILD_WINDOWS_PLUGIN_SH := $(DEPLOY_TOOLS) buildwindowsplugin
+DEPLOY_WINDOWS_PLUGIN_SH := $(DEPLOY_TOOLS) deploywindowsplugin
 DEPLOY_ESX_SH := $(DEPLOY_TOOLS) deployesx
 DEPLOY_ESX_FOR_UPGRADE := $(DEPLOY_TOOLS) deployesxForUpgrade
 CLEANVM_SH    := $(DEPLOY_TOOLS) cleanvm
@@ -315,15 +316,18 @@ run-upgrade-test:
 	ESX='$(ESX)' VM1='$(VM1)' VIB_BIN='$(VIB_BIN)' PLUGIN_NAME='$(PLUGIN_NAME)' PLUGIN_TAG='$(PLUGIN_TAG)' UPGRADE_FROM_VER='$(UPGRADE_FROM_VER)' UPGRADE_TO_VER='$(UPGRADE_TO_VER)' $(DOCKER_HUB_REPO)='$(DOCKER_HUB_REPO)' $(UPGRADE_TEST)
 
 VMS= $(VM1) $(VM2) $(WORKER2) $(CI_NODE4)
+WIN_VMS= $(WIN_VM1)
 
 deploy-vm: clean-vm
 	$(DEPLOY_VM_SH) "$(VMS)" $(PLUGIN_NAME):$(PLUGIN_TAG)
 deploy-vm-test:
 	$(DEPLOY_VM_TEST_SH) "$(VMS)" $(BIN) $(SCRIPTS)
-deploy-vm-plugin:
-	$(DEPLOY_VM_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
-deploy-plugin-windows-vm:
-	$(DEPLOY_PLUGIN_WINDOWS_VM_SH) "$(WIN_VM1)" $(PLUGIN_SRC_DIR)
+build-plugin:
+	$(BUILD_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
+build-windows-plugin:
+	$(BUILD_WINDOWS_PLUGIN_SH) $(WIN_VM1) $(PLUGIN_SRC_DIR)
+deploy-windows-plugin:
+	$(DEPLOY_WINDOWS_PLUGIN_SH) "$(WIN_VMS)" $(PLUGIN_SRC_DIR)
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all

@@ -42,6 +42,7 @@ PLUGIN_BIN_ZIP=vdvs-bin.zip
 WIN_TEMP_DIR=C:\\Users\\root\\AppData\\Local\\Temp
 WIN_PLUGIN_SRC_DIR=C:\\Users\\root\\go\\src\\github.com\\vmware\\docker-volume-vsphere
 WIN_PLUGIN_BIN_ZIP_LOC=$WIN_PLUGIN_SRC_DIR\\build\\windows\\docker-volume-vsphere.zip
+WIN_BUILD_DIR=build/windows/
 
 # VM Functions
 
@@ -65,7 +66,7 @@ function deployvm {
     done
 }
 
-function deployplugin {
+function buildplugin {
     for ip in $IP_LIST
     do
         TARGET=root@$ip
@@ -94,40 +95,49 @@ function deployplugin {
     done
 }
 
-function deploypluginwindows {
+function buildwindowsplugin {
+    TARGET=root@${IP_LIST[0]}
+
     log "Compressing source into $PLUGIN_SRC_ZIP..."
     cd $PLUGIN_SRC_DIR
     rm -f $PLUGIN_SRC_ZIP
     stashName=`git stash create`;
     git archive --format zip --output $PLUGIN_SRC_ZIP $stashName
 
+    log "Cleaning up older files from $TARGET..."
+    $SSH $TARGET "powershell Remove-Item -Recurse -Force $WIN_PLUGIN_SRC_DIR"
+
+    log "Transferring $PLUGIN_SRC_ZIP to $TARGET..."
+    scp $PLUGIN_SRC_ZIP $TARGET:$WIN_TEMP_DIR
+
+    log "Extracting $PLUGIN_SRC_ZIP on $TARGET..."
+    $SSH $TARGET "powershell Expand-Archive $WIN_TEMP_DIR\\$PLUGIN_SRC_ZIP -DestinationPath $WIN_PLUGIN_SRC_DIR"
+
+    log "Building windows plugin on $TARGET..."
+    $SSH $TARGET "cd $WIN_PLUGIN_SRC_DIR && build.bat"
+
+    log "Copying $WIN_PLUGIN_BIN_ZIP_LOC from $TARGET to local..."
+    mkdir -p $WIN_BUILD_DIR
+    scp $TARGET:$WIN_PLUGIN_BIN_ZIP_LOC $WIN_BUILD_DIR/$PLUGIN_BIN_ZIP
+
+    log "Cleaning up..."
+    rm -f $PLUGIN_SRC_ZIP
+}
+
+function deploywindowsplugin {
+    cd $PLUGIN_SRC_DIR
+
     for ip in $IP_LIST
     do
         TARGET=root@$ip
 
-        log "Cleaning up older files from $TARGET..."
-        $SSH $TARGET "powershell Remove-Item -Recurse -Force $WIN_PLUGIN_SRC_DIR"
-
-        log "Transferring $PLUGIN_SRC_ZIP to $TARGET..."
-        scp $PLUGIN_SRC_ZIP $TARGET:$WIN_TEMP_DIR
-
-        log "Extracting $PLUGIN_SRC_ZIP on $TARGET..."
-        $SSH $TARGET "powershell Expand-Archive $WIN_TEMP_DIR\\$PLUGIN_SRC_ZIP -DestinationPath $WIN_PLUGIN_SRC_DIR"
-
-        log "Building windows plugin on $TARGET..."
-        $SSH $TARGET "cd $WIN_PLUGIN_SRC_DIR && build.bat"
+        log "Transferring dependencies to $TARGET..."
+        scp install-vdvs.ps1 $TARGET:$WIN_TEMP_DIR
+        scp $WIN_BUILD_DIR/$PLUGIN_BIN_ZIP $TARGET:$WIN_TEMP_DIR
 
         log "Installing plugin as a windows service on $TARGET..."
-        $SSH $TARGET <<-EOF
-            cd $WIN_PLUGIN_SRC_DIR
-            cp $WIN_PLUGIN_BIN_ZIP_LOC $PLUGIN_BIN_ZIP
-            powershell -ExecutionPolicy ByPass -File install-vdvs.ps1 "file:///$WIN_PLUGIN_SRC_DIR\\$PLUGIN_BIN_ZIP" -Force
-		EOF
-        # EOF needs to be tab indented
+        $SSH $TARGET "powershell -ExecutionPolicy ByPass -File $WIN_TEMP_DIR\\install-vdvs.ps1 file:///$WIN_TEMP_DIR\\$PLUGIN_BIN_ZIP -Force"
     done
-
-    log "Cleaning up..."
-    rm -f $PLUGIN_SRC_ZIP
 }
 
 function managedPluginSanityCheck {
@@ -423,7 +433,7 @@ cleanvm)
         fi
         cleanvm
         ;;
-deployplugin)
+buildplugin)
         PLUGIN_BIN="$2"
         MANAGED_PLUGIN_SRC="$3"
         SCRIPTS="$4"
@@ -434,11 +444,23 @@ deployplugin)
         then
             usage "Missing params: plugin/binary/script folder"
         fi
-        deployplugin
+        buildplugin
         ;;
-deploypluginwindows)
+buildwindowsplugin)
         PLUGIN_SRC_DIR="$2"
-        deploypluginwindows
+        if [ -z "$PLUGIN_SRC_DIR" ]
+        then
+            usage "Missing params: plugin source folder"
+        fi
+        buildwindowsplugin
+        ;;
+deploywindowsplugin)
+        PLUGIN_SRC_DIR="$2"
+        if [ -z "$PLUGIN_SRC_DIR" ]
+        then
+            usage "Missing params: plugin source folder"
+        fi
+        deploywindowsplugin
         ;;
 *)
         usage "Unknown function:  \"$FUNCTION_NAME\""
