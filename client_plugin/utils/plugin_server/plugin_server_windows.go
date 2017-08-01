@@ -31,7 +31,7 @@ const (
 	// npipeAddr is the plugin's npipe address.
 	npipeAddr = "//./pipe/vsphere-dvs"
 
-	// pluginsPath is the Docker plugins directory path.
+	// pluginsPath is the Docker's plugin directory path.
 	pluginsPath = `C:\ProgramData\docker\plugins\`
 
 	// configFilePath is the plugin's config file path.
@@ -41,19 +41,19 @@ const (
 // pluginConfig is the plugin config.
 var pluginConfig = fmt.Sprintf(`{ "Name": "vsphere", "Addr": "npipe://%s" }`, npipeAddr)
 
-// writePluginConfig writes the plugin config to the Docker plugins directory.
-func writePluginConfig() {
+// writePluginConfig writes the plugin config to Docker's plugin directory.
+func writePluginConfig() error {
 	if err := os.MkdirAll(pluginsPath, 0755); err != nil {
 		log.WithFields(log.Fields{"path": pluginsPath,
-			"err": err}).Fatal("Failed to create plugin config directory ")
-		panic("Failed to create plugin config directory")
+			"err": err}).Error("Failed to create plugin config directory ")
+		return err
 	}
-
 	if err := ioutil.WriteFile(configFilePath, []byte(pluginConfig), 0644); err != nil {
 		log.WithFields(log.Fields{"path": configFilePath,
-			"err": err}).Fatal("Failed to write plugin config ")
-		panic("Failed to write plugin config")
+			"err": err}).Error("Failed to write plugin config ")
+		return err
 	}
+	return nil
 }
 
 // NpipePluginServer serves HTTP requests from Docker over windows npipe.
@@ -71,12 +71,19 @@ func NewPluginServer(driverName string, driver *volume.Driver) *NpipePluginServe
 // Init initializes the npipe listener which serves HTTP requests
 // from Docker using the HTTP mux.
 func (s *NpipePluginServer) Init() {
-	writePluginConfig()
-
 	var err error
-	s.listener, err = winio.ListenPipe(npipeAddr, nil)
+	var msg string
+
+	if err = writePluginConfig(); err != nil {
+		msg = fmt.Sprintf("Failed to write Docker plugin config - exiting")
+	} else {
+		s.listener, err = winio.ListenPipe(npipeAddr, nil)
+		if err != nil {
+			msg = fmt.Sprintf("Failed to initialize npipe at %s - exiting", npipeAddr)
+		}
+	}
+
 	if err != nil {
-		msg := fmt.Sprintf("Failed to initialize npipe at %s - exiting", npipeAddr)
 		log.WithFields(log.Fields{"err": err}).Fatal(msg)
 		fmt.Println(msg)
 		os.Exit(1)
