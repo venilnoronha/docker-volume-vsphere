@@ -102,8 +102,7 @@ function buildwindowsplugin {
     log "Compressing source into $PLUGIN_SRC_ZIP..."
     cd $PLUGIN_SRC_DIR
     rm -f $PLUGIN_SRC_ZIP
-    stashName=`git stash create`;
-    git archive --format zip --output $PLUGIN_SRC_ZIP $stashName
+    git archive --format zip --output $PLUGIN_SRC_ZIP HEAD
 
     log "Cleaning up older files from $TARGET..."
     $SSH $TARGET "powershell Remove-Item -Recurse -Force $WIN_PLUGIN_SRC_DIR"
