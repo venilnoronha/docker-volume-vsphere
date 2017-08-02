@@ -37,6 +37,7 @@ BUILD_LOC=$TMP_LOC/build
 PLUGIN_LOC=$TMP_LOC/plugin_dockerbuild
 COMMON_VARS="../Commonvars.mk"
 VMDK_OPS_CONFIG=/etc/vmware/vmdkops/log_config.json
+PLUGIN_SRC_DIR=../
 PLUGIN_SRC_ZIP=vdvs-src.zip
 PLUGIN_BIN_ZIP=vdvs-bin.zip
 WIN_TEMP_DIR=C:\\Users\\root\\AppData\\Local\\Temp
@@ -447,19 +448,9 @@ buildplugin)
         buildplugin
         ;;
 buildwindowsplugin)
-        PLUGIN_SRC_DIR="$2"
-        if [ -z "$PLUGIN_SRC_DIR" ]
-        then
-            usage "Missing params: plugin source folder"
-        fi
         buildwindowsplugin
         ;;
 deploywindowsplugin)
-        PLUGIN_SRC_DIR="$2"
-        if [ -z "$PLUGIN_SRC_DIR" ]
-        then
-            usage "Missing params: plugin source folder"
-        fi
         deploywindowsplugin
         ;;
 *)

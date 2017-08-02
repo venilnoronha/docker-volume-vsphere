@@ -93,8 +93,6 @@ VMDKOPS_TEST_MODULE := vmdkops
 VMDKOPS_MODULE_SRC = $(VMDKOPS_MODULE)/*.go $(VMCI_SRC)
 
 # All sources. We rebuild if anything changes here
-PLUGIN_SRC_DIR := ../
-
 COMMON_SRC = utils/log_formatter/log_formatter.go \
 	utils/refcount/refcnt.go utils/plugin_server/plugin_server.go \
 	utils/fs/fs.go utils/config/config.go utils/plugin_utils/plugin_utils.go \
@@ -325,9 +323,9 @@ deploy-vm-test:
 build-plugin:
 	$(BUILD_PLUGIN_SH) "$(VM2)" $(PLUGIN_BIN) $(MANAGED_PLUGIN_LOC) $(SCRIPTS) $(DOCKER_HUB_REPO) $(VERSION_TAG) $(EXTRA_TAG)
 build-windows-plugin:
-	$(BUILD_WINDOWS_PLUGIN_SH) $(WIN_VM1) $(PLUGIN_SRC_DIR)
+	$(BUILD_WINDOWS_PLUGIN_SH) $(WIN_VM1)
 deploy-windows-plugin:
-	$(DEPLOY_WINDOWS_PLUGIN_SH) "$(WIN_VMS)" $(PLUGIN_SRC_DIR)
+	$(DEPLOY_WINDOWS_PLUGIN_SH) "$(WIN_VMS)"
 
 deploy-all: deploy-esx deploy-vm deploy-vm-test
 deploy: deploy-all
