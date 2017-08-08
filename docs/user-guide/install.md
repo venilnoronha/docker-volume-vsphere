@@ -37,9 +37,9 @@ Installation Result
    VIBs Skipped:
 ```
 
-## Installation on Docker Hosts
+## Installation on Linux Docker Hosts
 
-vDVS plugin can be installed on Docker hosts like any docker plugin installation. You will need docker version **1.13/17.03 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.
+vDVS plugin can be installed on Linux Docker hosts like any docker plugin installation. You will need docker version **1.13/17.03 or above** on the VM. In a large pool of nodes, you can push the plugin installation to multiple VM through a configuration management tool such as Ansible/Salt or using a remote shell session. The installation of plugin is really simple and we will walk through the steps to install/uninstall, enable and verify the plugin installation.
 
 The plugin is available as a docker image on the public docker registry but if you are using a private registry, you will have to point to the appropriate URL of the image.
 
@@ -89,5 +89,68 @@ ID                  NAME                DESCRIPTION                           EN
 vsphere
 ~# docker plugin ls
 ID                  NAME                DESCRIPTION         ENABLED
+```
+
+## Installation on Windows Docker Hosts
+
+vDVS plugin can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **1.13/17.03 or above** (with Windows containers mode enabled) on the VM.
+
+First, start an instance of PowerShell with the "Run as administrator" option.
+
+* **To download the plugin installer**
+
+```
+PS C:\> Invoke-WebRequest -Uri https://raw.githubusercontent.com/vmware/vsphere-storage-for-docker/master/install-vdvs.ps1 -Out install-vdvs.ps1
+```
+
+* **To install the plugin**
+
+```
+PS C:\> .\install-vdvs.ps1 <vdvs_windows_binary_url>
+```
+
+For example, the vDVS 0.16 developer preview binary could be installed as shown below.
+
+```
+PS C:\> .\install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=vsphere-storage-for-docker_0.16_windows_developer-preview.zip
+Downloading from https://bintray.com/vmware/vDVS/download_file?file_path=vsphere-storage-for-docker_0.16_windows_developer-preview.zip...
+Extracting docker-volume-vsphere.zip into C:\Program Files\VMware\vmdkops...
+Deleting docker-volume-vsphere.zip...
+Installing Windows service vdvs from C:\Program Files\VMware\vmdkops\vdvs.exe...
+
+Status   Name               DisplayName
+------   ----               -----------
+Stopped  vdvs               vSphere Docker Volume Service
+Starting Windows service vdvs...
+Running  vdvs               vSphere Docker Volume Service
+Windows service vdvs installed successfully!
+```
+
+* **To verify that the plugin was installed**
+
+```
+PS C:\> Get-Service vdvs
+
+Status   Name               DisplayName
+------   ----               -----------
+Running  vdvs               vSphere Docker Volume Service
+```
+
+* **To uninstall the plugin**
+
+```
+PS C:\> .\install-vdvs.ps1 -Uninstall
+Do you really want to uninstall vdvs [Y/N]?: Y
+Stopping Windows service vdvs...
+Deleting Windows service vdvs...
+[SC] DeleteService SUCCESS
+Deleting C:\Program Files\VMware\vmdkops...
+Windows service vdvs uninstalled successfully!
+```
+
+**Note:** In case of a failure due to an UnauthorizedAccess error, please unblock the script using the following command and retry.
+
+```
+PS C:\> Set-ExecutionPolicy Unrestricted -Scope Process -Force
 ```
 

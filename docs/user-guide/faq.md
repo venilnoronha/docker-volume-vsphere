@@ -13,6 +13,12 @@ Please see README.md in the for the release by clicking on the tag for the relea
 ### How do I run the setup on my laptop?
 Follow the [guide on the wiki](https://github.com/vmware/vsphere-storage-for-docker/wiki/Using-laptop-for-running-the-entire-stack)
 
+### How do I bind a volume to a particular container host?
+This can be achieved via [Tenancy](http://vmware.github.io/vsphere-storage-for-docker/documentation/tenancy.html).
+
+### Can I migrate data between Linux and Windows containers?
+Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vDVS plugin doesn't support such cases, nor does it provide any explicit help.
+
 ## Troubleshooting
 
 ### Docker Service to ESX Backend Communication.
