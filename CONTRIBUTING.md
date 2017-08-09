@@ -23,8 +23,8 @@ Changes to `[master]/docs` are not promoted to `gh-pages` (document release bran
 
 2. Make documentation changes in your branch and send out a PR.
 
-3. Once the PR is merged, copy the updated content from `master` to respective files under `gh-pages/jekyll-docs` on another branch that's based off of the `gh-pages` branch.<br />
-*E.g. Any changes to `[master]/docs/user-guide/admin-cli.md` should be copied to `gh-pages/jekyll-docs/admin-cli.md`.*
+3. Once the PR is merged, copy the updated content from `master` to respective files under `gh-pages/jekyll-docs` on another branch that's based off of the `gh-pages` branch. For example, any changes to `[master]/docs/user-guide/admin-cli.md` should be copied to `[gh-pages]/jekyll-docs/admin-cli.md`.<br />
+*E.g. `git checkout -b doc-updates-gh-pages vmware/gh-pages`*
 
 4. Send out another PR with these changes. Once merged, your changes should get reflected on https://vmware.github.io/docker-volume-vsphere/documentation.
 
