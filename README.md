@@ -3,7 +3,7 @@
 [![Join the chat at https://gitter.im/vmware/vsphere-storage-for-docker](https://badges.gitter.im/vmware/vsphere-storage-for-docker.svg)](https://gitter.im/vmware/vsphere-storage-for-docker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Docker Pulls](https://img.shields.io/badge/docker-pull-blue.svg)](https://store.docker.com/plugins/vsphere-docker-volume-service?tab=description)
 [![VIB_Download](https://api.bintray.com/packages/vmware/vDVS/VIB/images/download.svg)](https://bintray.com/vmware/vDVS/VIB/_latestVersion)
-[![vDVS Windows](https://img.shields.io/badge/vDVS%20Windows-latest-blue.svg)](https://bintray.com/vmware/vDVS/vDVS_Windows/_latestVersion)
+[![Windows Plugin](https://img.shields.io/badge/Windows%20Plugin-latest-blue.svg)](https://bintray.com/vmware/vDVS/vDVS_Windows/_latestVersion)
 
 
 # vSphere Docker Volume Service

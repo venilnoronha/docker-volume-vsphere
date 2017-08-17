@@ -93,7 +93,7 @@ ID                  NAME                DESCRIPTION         ENABLED
 
 ## Installation on Windows Docker Hosts
 
-vDVS plugin can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **1.13/17.03 or above** (with Windows containers mode enabled) on the VM.
+vSphere Storage for Docker can be installed on Windows Server 2016/Windows 10 VMs using the PowerShell installer. You will need Docker EE/Docker for Windows version **1.13/17.03 or above** (with Windows containers mode enabled) on the VM.
 
 First, start an instance of PowerShell with the "Run as administrator" option.
 
@@ -106,10 +106,10 @@ PS C:\> Invoke-WebRequest -Uri https://raw.githubusercontent.com/vmware/vsphere-
 * **To install the plugin**
 
 ```
-PS C:\> .\install-vdvs.ps1 <vdvs_windows_binary_url>
+PS C:\> .\install-vdvs.ps1 <windows_plugin_binary_url>
 ```
 
-For example, the vDVS 0.16 developer preview binary could be installed as shown below.
+For example, the vSphere Storage for Docker 0.16 developer preview binary could be installed as shown below.
 
 ```
 PS C:\> .\install-vdvs.ps1 https://bintray.com/vmware/vDVS/download_file?file_path=vsphere-storage-for-docker_0.16_windows_developer-preview.zip

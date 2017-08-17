@@ -17,7 +17,7 @@ Follow the [guide on the wiki](https://github.com/vmware/vsphere-storage-for-doc
 This can be achieved via [Tenancy](http://vmware.github.io/vsphere-storage-for-docker/documentation/tenancy.html).
 
 ### Can I migrate data between Linux and Windows containers?
-Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vDVS plugin doesn't support such cases, nor does it provide any explicit help.
+Volumes created via the Linux plugin are formatted with ext4 by default, and the ones created via the Windows plugin are formatted with NTFS. While it is possible to cross-mount such volumes, the vSphere Storage for Docker plugin doesn't support such cases, nor does it provide any explicit help.
 
 ## Troubleshooting
 
