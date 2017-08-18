@@ -32,10 +32,11 @@ const (
 	FstypeDefault = ntfs
 
 	// maxDiskAttachWaitSec is the max time to wait for a disk to be attached.
-	// TODO: Reduce disk attach wait time once parallel disk identification
-	// is enabled. Currently, access to ps.Exec is synchronized and it causes
-	// such parallel requests (in e2e tests) to block, and therefore the high
-	// wait time.
+	// TODO: Reduce disk attach wait time once parallel disk identification is
+	// implemented. Currently, fs.getDiskNum(..) blocks during parallel execution
+	// due to synchronized access to ps.Exec(..). Therefore, parallel volume
+	// creation in e2e tests block in fs.DevAttachWait(..) for a while and so we
+	// allow a long delay here.
 	maxDiskAttachWaitSec = 60 * time.Second
 
 	ntfs         = "ntfs"
