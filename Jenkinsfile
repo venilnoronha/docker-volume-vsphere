@@ -10,7 +10,7 @@ pipeline {
 		        script {
                             def jn = Hudson.instance
                             for (slave in jn.slaves) {
-                                echo "Slave: ${slave.computer.name} -- labels: ${slave.computer.labelString}"
+                                echo "Slave: ${slave.computer.name}"
                             }
 			}
 		    }
