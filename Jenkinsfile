@@ -8,8 +8,8 @@ pipeline {
 	        stage('Print slaves') {
 		    steps {
 		        script {
-			    jenkins.model.Jenkins.instance.nodes.each { it ->
-				echo "Triggering on " + it.name
+			    jenkins.model.Jenkins.instance.nodes.each { node ->
+				echo "Triggering on " + node.name
 			    }
 			}
 		    }
