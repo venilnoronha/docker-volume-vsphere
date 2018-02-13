@@ -5,6 +5,16 @@ pipeline {
         stage('Node selection') {
 	    failFast true
 	    parallel {
+	        stage('Print slaves') {
+		    steps {
+		        script {
+			    hudson = hudson.model.Hudson.instance
+			    hudson.slaves.each { slave ->
+                                print "Slave  $slave.nodeName : Labels: $slave.labelString"
+                            }
+			}
+		    }
+		}
 	        stage('Select ESX 6.5 node') {
 		    agent {
                         label "vdvs-65-slaves"
