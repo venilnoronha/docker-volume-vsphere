@@ -259,6 +259,6 @@ pipeline {
 
 @NonCPS
 def nodeNames() {
-    return jenkins.model.Jenkins.nodes.collect { node -> node.name }
+    return jenkins.model.Jenkins.instance.nodes.collect { node -> node.name }
 }
 
