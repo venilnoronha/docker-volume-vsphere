@@ -8,9 +8,12 @@ pipeline {
 	        stage('Print slaves') {
 		    steps {
 		        script {
-			    jenkins.model.Jenkins.instance.nodes.each { node ->
+			    def jk = jenkins.model.Jenkins.instance
+			    jk.nodes.each { node ->
 				echo "Triggering on " + node.name
+                                node.labelString = node.labelString + " available"
 			    }
+                            jk.save()
 			}
 		    }
 		}
