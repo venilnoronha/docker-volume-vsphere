@@ -8,9 +8,9 @@ pipeline {
 	        stage('Print slaves') {
 		    steps {
 		        script {
-			    hudson = hudson.model.Hudson.instance
-			    hudson.slaves.each { slave ->
-                                print "Slave  $slave.nodeName : Labels: $slave.labelString"
+                            def jn = Hudson.instance
+                            for (slave in jn.slaves) {
+                                echo "Slave: ${slave.computer.name} -- labels: ${slave.computer.labelString}"
                             }
 			}
 		    }
