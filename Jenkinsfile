@@ -8,7 +8,7 @@ pipeline {
 	        stage('Print slaves') {
 		    steps {
 		        script {
-			    [1, 2, 3].each { println it }
+			    jenkins.model.Jenkins.instance.nodes.each { println it.name }
 			}
 		    }
 		}
