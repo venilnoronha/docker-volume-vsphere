@@ -2,6 +2,38 @@ pipeline {
     agent none
 
     stages {
+        stage('Node selection') {
+	    failFast true
+	    parallel {
+	        stage('Select ESX 6.5 node') {
+		    agent {
+                        label "vdvs-65-slaves"
+		    }
+		    steps {
+		        script {
+			    hudson = hudson.model.Hudson.instance
+			    hudson.slaves.each { slave ->
+                                print "Slave  $slave.nodeName : Labels: $slave.labelString"
+                            }
+			}
+		    }
+		}
+		stage('Select ESX 6.0 node') {
+		    agent {
+                        label "vdvs-60-slaves"
+		    }
+		    steps {
+		        script {
+			    hudson = hudson.model.Hudson.instance
+			    hudson.slaves.each { slave ->
+                                print "Slave  $slave.nodeName : Labels: $slave.labelString"
+                            }
+			}
+		    }
+		}
+	    }
+	}
+
         stage('Checkout code') {
             failFast true
             parallel {
