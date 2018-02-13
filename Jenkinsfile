@@ -8,10 +8,7 @@ pipeline {
 	        stage('Print slaves') {
 		    steps {
 		        script {
-                            def jn = Hudson.instance
-                            for (slave in jn.slaves) {
-                                echo "Slave: ${slave.computer.name}"
-                            }
+			    [1, 2, 3].each { println it }
 			}
 		    }
 		}
