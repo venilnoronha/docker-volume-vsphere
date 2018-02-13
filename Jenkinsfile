@@ -8,11 +8,6 @@ pipeline {
 	        stage('Print slaves') {
 		    steps {
 		        script {
-                            @NonCPS
-                            def nodeNames() {
-                                return jenkins.model.Jenkins.instance.nodes.collect { node -> node.name }
-                            }
-
                             def nn = nodeNames()
                             for (int i=0; i<nn.size(); ++i) {
 				echo "Triggering on " + nn[i]
@@ -261,3 +256,9 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr:'10'))
     }
 }
+
+@NonCPS
+def nodeNames() {
+    return jenkins.model.Jenkins.instance.nodes.collect { node -> node.name }
+}
+
