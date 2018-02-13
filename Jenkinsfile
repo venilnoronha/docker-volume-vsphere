@@ -11,9 +11,10 @@ pipeline {
 			    def jk = jenkins.model.Jenkins.instance
 			    jk.nodes.each { node ->
 				echo "Triggering on " + node.name
-                                node.labelString = node.labelString + " available"
+				node.labelString = node.labelString.replaceAll("\\b available\\b", "")
+                                node.labelString = node.labelString + " free"
+				node.save()
 			    }
-                            jk.save()
 			}
 		    }
 		}
