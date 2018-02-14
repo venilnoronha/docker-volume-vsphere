@@ -248,6 +248,36 @@ pipeline {
 
     post {
         always {
+            stages {
+                agent {
+                    label env.VDVS_65_NODE_ID
+                }
+                steps {
+                    script {
+                        echo "Cleaning up ESX 6.5 AAAAAAAAAAA"
+                        sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                        sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                        sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                        sh "make clean-vfile"
+                        sh "make clean-all"
+	            }
+                }
+
+                agent {
+                    label env.VDVS_60_NODE_ID
+                }
+                steps {
+                    script {
+                        echo "Cleaning up ESX 6.0 AAAAAAAAAAA"
+                        sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                        sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                        sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                        sh "make clean-vfile"
+                        sh "make clean-all"
+	            }
+                }
+            }
+
  	    script {
                 echo "Resetting nodes..."
                 replaceNodeLabel(env.VDVS_65_NODE_NAME, env.VDVS_65_NODE_ID, "available")
