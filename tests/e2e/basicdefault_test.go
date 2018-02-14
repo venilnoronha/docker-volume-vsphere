@@ -75,6 +75,8 @@ func (s *BasicTestSuite) TestBasicVolumeIsolation(c *C) {
 func (s *BasicTestSuite) TestVmGroupVolumeIsolation(c *C) {
 	misc.LogTestStart(c.TestName())
 
+	c.Skip("skipping temporarily")
+
 	// Initialize Config DB
 	out, err := admincli.ConfigInit(s.esx)
 	c.Assert(err, IsNil, Commentf(out))
