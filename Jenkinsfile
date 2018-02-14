@@ -24,10 +24,9 @@ pipeline {
 		    }
 		    steps {
 		        script {
-			    hudson = hudson.model.Hudson.instance
-			    hudson.slaves.each { slave ->
-                                print "Slave  $slave.nodeName : Labels: $slave.labelString"
-                            }
+			    env.VDVS_65_NODE = UUID.randomUUID().toString()
+			    echo "AAAAAAAAAAAAAAAAAAAAAAAAAA: " + env.NODE_NAME
+			    echo env.VDVS_60_NODE
 			}
 		    }
 		}
@@ -37,10 +36,9 @@ pipeline {
 		    }
 		    steps {
 		        script {
-			    hudson = hudson.model.Hudson.instance
-			    hudson.slaves.each { slave ->
-                                print "Slave  $slave.nodeName : Labels: $slave.labelString"
-                            }
+			    env.VDVS_60_NODE = UUID.randomUUID().toString()
+			    echo "AAAAAAAAAAAAAAAAAAAAAAAAAA: " + env.NODE_NAME
+			    echo env.VDVS_60_NODE
 			}
 		    }
 		}
