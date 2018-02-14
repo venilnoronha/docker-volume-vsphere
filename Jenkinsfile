@@ -135,7 +135,7 @@ pipeline {
                                 sh "make test-esx"
                                 sh "make test-vm"
 			    }
-			    catch {
+			    catch (ex) {
                                 sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
@@ -163,7 +163,7 @@ pipeline {
                                 sh "make test-esx"
                                 sh "make test-vm"
 			    }
-			    catch {
+			    catch (ex) {
                                 sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
