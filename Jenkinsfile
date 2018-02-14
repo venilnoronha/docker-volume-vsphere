@@ -125,26 +125,52 @@ pipeline {
                         label env.VDVS_65_NODE_ID
                     }
 
-                steps {
-                    sh "echo Test VDVS On 6.5 setup"
-                    sh "echo ESX=$ESX; echo VM1=$VM1; echo VM2=$VM2; echo VM3=$VM3; echo PKG_VERSION"
-                    sh "echo starting e2e tests" 
-                    sh "make test-e2e"
-                    sh "make test-esx"
-                    sh "make test-vm"
+                    steps {
+		        script {
+			    try {
+                                sh "echo Test VDVS On 6.5 setup"
+                                sh "echo ESX=$ESX; echo VM1=$VM1; echo VM2=$VM2; echo VM3=$VM3; echo PKG_VERSION"
+                                sh "echo starting e2e tests"
+                                sh "make test-e2e"
+                                sh "make test-esx"
+                                sh "make test-vm"
+			    }
+			    catch {
+                                sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                                sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                                sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                                sh "make clean-all"
+			        throw
+			    }
+			}
                     }
                 }
+
                 stage('Run tests on ESX 6.0') {
                     agent {
-                    label env.VDVS_60_NODE_ID
+                        label env.VDVS_60_NODE_ID
                     }   
-                steps {
-                    sh "echo Test VDVS On 6.0 setup"
-                    sh "echo ESX=$ESX; echo VM1=$VM1; echo VM2=$VM2; echo VM3=$VM3; echo PKG_VERSION"
-                    sh "echo starting e2e tests"
-                    sh "make test-e2e"
-                    sh "make test-esx"
-                    sh "make test-vm"
+                    steps {
+		        script {
+                            def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
+                            def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
+                            def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
+			    try {
+                                sh "echo Test VDVS On 6.0 setup"
+                                sh "echo ESX=$ESX; echo VM1=$VM1; echo VM2=$VM2; echo VM3=$VM3; echo PKG_VERSION"
+                                sh "echo starting e2e tests"
+                                sh "make test-e2e"
+                                sh "make test-esx"
+                                sh "make test-vm"
+			    }
+			    catch {
+                                sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                                sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                                sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
+                                sh "make clean-all"
+			        throw
+			    }
+			}
                     }
                 }
             }
@@ -158,11 +184,11 @@ pipeline {
                        label env.VDVS_65_NODE_ID
                     }
                     steps {
-                        script{
+                        script {
                             def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
                             def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
                             def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
-                            try{
+                            try {
                                 sh "echo Build, deploy, and test vFile on 6.5 setup"
                                 sh "echo Build vFile binaries"
                                 sh "echo ESX = $ESX; echo VM1=$VM1; echo VM2=$VM2; echo VM3=$VM3;" 
@@ -172,7 +198,7 @@ pipeline {
                                 sh "echo Start the vFile tests"
                                 sh "make test-e2e-vfile"
                                 sh "echo vFile tests finished"  
-                            } finally{
+                            } finally {
                                 sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
@@ -193,7 +219,7 @@ pipeline {
                             def stopContainers = "docker stop \$(docker ps -a -q) 2> /dev/null || true"
                             def removeContainers = "docker rm \$(docker ps -a -q) 2> /dev/null || true"
                             def removeVolumes =  "docker volume rm \$(docker volume ls -q -f dangling=true) 2> /dev/null || true"
-                            try{
+                            try {
                                 echo "Build, deploy, and test vFile on 6.0 setup"
                                 sh "echo Build vFile binaries"
                                 sh "echo ESX=$ESX; echo VM1=$VM1; echo VM2=$VM2; echo VM3=$VM3;" 
@@ -203,7 +229,7 @@ pipeline {
                                 sh "echo Run the vFile tests"
                                 sh "make test-e2e-vfile"
                                 sh "echo vFile tests finished"
-                            }finally{
+                            } finally {
                                 sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
@@ -220,8 +246,8 @@ pipeline {
         stage('Test Windows plugin') {
         /* This builds, deploys and tests the windows binaries */
             agent {
-                        label env.VDVS_65_NODE_ID
-                    }
+                label env.VDVS_65_NODE_ID
+            }
 
             steps {
                 sh "echo Build, deploy, and test Windows plugin"
@@ -248,36 +274,6 @@ pipeline {
 
     post {
         always {
-            stages {
-                agent {
-                    label env.VDVS_65_NODE_ID
-                }
-                steps {
-                    script {
-                        echo "Cleaning up ESX 6.5 AAAAAAAAAAA"
-                        sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
-                        sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
-                        sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
-                        sh "make clean-vfile"
-                        sh "make clean-all"
-	            }
-                }
-
-                agent {
-                    label env.VDVS_60_NODE_ID
-                }
-                steps {
-                    script {
-                        echo "Cleaning up ESX 6.0 AAAAAAAAAAA"
-                        sh "ssh ${env.GOVC_USERNAME}@$VM1 ${stopContainer}; ${removeContainer}; ${removeVolume}"
-                        sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
-                        sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
-                        sh "make clean-vfile"
-                        sh "make clean-all"
-	            }
-                }
-            }
-
  	    script {
                 echo "Resetting nodes..."
                 replaceNodeLabel(env.VDVS_65_NODE_NAME, env.VDVS_65_NODE_ID, "available")
