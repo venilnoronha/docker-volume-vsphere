@@ -140,7 +140,7 @@ pipeline {
                                 sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "make clean-all"
-			        throw
+			        throw ex
 			    }
 			}
                     }
@@ -168,7 +168,7 @@ pipeline {
                                 sh "ssh ${env.GOVC_USERNAME}@$VM2 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "ssh ${env.GOVC_USERNAME}@$VM3 ${stopContainer}; ${removeContainer}; ${removeVolume}"
                                 sh "make clean-all"
-			        throw
+			        throw ex
 			    }
 			}
                     }
